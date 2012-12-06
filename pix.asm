@@ -9,6 +9,15 @@
 
 ; Main loop. Triggered every 1/60s by an interrup from the clock
 :mainLoop
+    SET A, 2            ; Put keyboard into button down mode
+    SET B, " "          ; See if the space bar is down
+    HWI [keyboardHWaddr]
+                        ; Send an interrupt to the keyboard
+    IFE C, 1            ; If space is down
+    SET [monitorVRAM], 0xf01f
+                        ; Make a white rectangle in the corner
+    IFN C, 1            ; Else
+    SET [monitorVRAM] 0 ; Turn set corner to black
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
