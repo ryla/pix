@@ -14,7 +14,7 @@
     HWI [keyboardHWaddr]
                         ; Send an interrupt to the keyboard
     IFE C, 1            ; If space is down
-    SET [monitorVRAM], 0xf01f
+    SET [monitorVRAM], 0xf000
                         ; Make a white rectangle in the corner
     IFN C, 1            ; Else
     SET [monitorVRAM] 0 ; Turn set corner to black
@@ -116,7 +116,7 @@
 
 ; Definitions for the monitor's font
 :monitorFont
-    DAT 0, 0
+    DAT 0xff81, 0x81ff 
 
 :monitorVRAM
     DAT 0               ; Monitor VRAM follows this, anything in the next
