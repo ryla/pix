@@ -12,6 +12,40 @@
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
+; Random number generator (no idea how it works)
+;; code from lowey2002 
+;; http://www.0x10cforum.com/forum/m/4932880/viewthread/2732760-pseudorandom-generator
+:set_parameters
+    SET A, 0x0000  ;; minimum
+    SET B, 0x0064  ;; maximum
+    SET C, 0x3E42  ;; seed
+
+:pseudorandom
+    SET X, C
+    MUL X, 0xE3D1
+    ADD X, 0x2B69
+    SHR X, 3
+    SET I, B
+    SUB I, A
+    MOD X, I
+    ADD X, A
+    SET C, X    ;; new seed
+    SET PUSH, X
+
+
+;; run it a couple of times
+:test_pseudorandom
+    IFE J, 20
+    SET PC, end
+    ADD J, 1
+    SET PC, pseudorandom
+
+
+:end
+    SET PC, end
+
+
+
 ; Configures the clock to create an interrupt every 1/60 second and sets
 ; up the interrupt handler for it.
 :setupClock
