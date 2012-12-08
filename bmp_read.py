@@ -14,13 +14,13 @@ def get_palette_entry(col):
     # col is a tuple in (r,g,b) format with colors from 0 to 255
     def format_el(el):
         int_val = int(round(el/255.0*15.0))
-        str_val = bin(int_val)
+        str_val = hex(int_val)
         return str_val[2:]
 
-    col = "0b0000"+''.join([format_el(el) for el in col])
-    return make_len_4(hex(int(col,2)))
+    col = "0x0"+''.join([format_el(el) for el in col])
+    return make_len_4(col)
 
-def read_grid_square(pixels, startx, starty):
+def read_grid_square(pixels, startx, starty, existing_colors):
     all_words = list()
     local_palette = dict()
     for x in range(startx,startx+4):
@@ -37,6 +37,11 @@ def read_grid_square(pixels, startx, starty):
             make_len_4(hex(int('0b'+all_words[16:32],2))))
     local_palette = tuple([color for color in local_palette])
 
+    for (i,color) in enumerate(local_palette):
+        if color in existing_colors:
+            existing_colors[color][0] != i
+            words = notted(words)
+            return (words, local_palette)
     return (words, local_palette)
 
 def notted(words):
@@ -81,7 +86,7 @@ if __name__ == "__main__":
     color_palette = dict()
     for x in range(int(width/4)):
         for y in range(int(height/8)):
-            words, local_palette = read_grid_square(pix, x*4,y*8)
+            words, local_palette = read_grid_square(pix, x*4, y*8, color_palette)
             for (i,color) in enumerate(local_palette):
                 if not color in color_palette:
                     color_palette[color] = list()
