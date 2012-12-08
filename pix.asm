@@ -2,24 +2,36 @@
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock, so mainLoop runs.
 
+
 :infiniteStall
     SET PC, infiniteStall
+    
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
-    SET A, 2            ; Put keyboard into button down mode
-    SET B, " "          ; See if the space bar is down
-    HWI [keyboardHWaddr]
+
+    ADD J,1				;Increment frame counter (J) per cycle
                         ; Send an interrupt to the keyboard
-    IFE C, 1            ; If space is down
-    SET [monitorVRAM], 0xf000
-                        ; Make a white rectangle in the corner
-    IFN C, 1            ; Else
-    SET [monitorVRAM] 0 ; Turn set corner to black
+    
+    MOD J,30 			;Limit J to be less than 30 to run ever						   ;y half second (1/60 cycles per second)
+    
+    IFE J,0				;increment which frame number
+    ADD Z,1				
+    MOD Z,3				;Mod for 3 frames of animation
+    SET A, 0xf000
+    ADD A, Z
+    SET [0x8000], A 	;Display on 0ith frame defined by literal
+    SET A, 0x5303
+    ADD A, Z
+    SET [0x8020], A		;Display on one row down 
+    
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
+                        
+                        
+                        
 
 ; Configures the clock to create an interrupt every 1/60 second and sets
 ; up the interrupt handler for it.
@@ -36,7 +48,7 @@
 ; Configures the monitor and the VRAM for the monitor. Note: time consuming
 :setupMonitor
     SET A, 0            ; Put monitor into set VRAM mode
-    SET B, monitorVRAM  ; Set the start of the monitor's VRAM mapping
+    SET B, 0x8000  ; Set the start of the monitor's VRAM mapping
     HWI [monitorHWaddr] ; Send settings to monitor. The monitor will still
                         ; respond to interrupts while it's powering on
     SET A, 1            ; Put monitor into set font mode
@@ -113,11 +125,29 @@
     DAT 0x0f5f          ; Violet
     DAT 0x0ff5          ; Yellow
     DAT 0x0fff          ; White
-
 ; Definitions for the monitor's font
 :monitorFont
-    DAT 0xff81, 0x81ff 
+	DAT 0x0000, 0x0077
+	DAT 0x0307, 0x0707
+	DAT 0x07ff, 0xf712
+	DAT 0x3f67, 0x4000
+	DAT 0x6f50, 0x1206
+	DAT 0x0602, 0xf0ff
+	DAT 0x1218, 0x0000
+	DAT 0x0000, 0x0040
+	DAT 0x0707, 0x07f8
+	DAT 0x0003, 0x0300
+	DAT 0x0500, 0x0600
+	DAT 0x3010, 0x9090
+	DAT 0x0088, 0xcf9f
+	DAT 0x603c, 0x040f
+	DAT 0x0700, 0x0604
+	DAT 0x0000, 0x0000
+	DAT 0x1807, 0xfff7
+	DAT 0x0107, 0x0000
+	DAT 0x06fd, 0xfd06
 
 :monitorVRAM
     DAT 0               ; Monitor VRAM follows this, anything in the next
                         ; 384 words will be displayed on the monitor
+                      
