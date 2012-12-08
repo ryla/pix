@@ -12,20 +12,19 @@
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
 
-    ADD J,1				;Increment frame counter (J) per cycle
+	ADD J,1				;Increment frame counter (J) per cycle
                         ; Send an interrupt to the keyboard
     
-    MOD J,30 			;Limit J to be less than 30 to run ever						   ;y half second (1/60 cycles per second)
+    MOD J,10 			;Limit J to be less than 30 to run ever						   ;y half second (1/60 cycles per second)
     
     IFE J,0				;increment which frame number
     ADD Z,1				
     MOD Z,3				;Mod for 3 frames of animation
-    SET A, 0xf000
-    ADD A, Z
-    SET [0x8000], A 	;Display on 0ith frame defined by literal
-    SET A, 0x5303
-    ADD A, Z
-    SET [0x8020], A		;Display on one row down 
+
+    SET [0x8001],[thiefHead+Z] 	;Display on 0ith frame defined by literal
+    SET [0x8020], [leftBody+Z]		;Display on one row down 
+    SET [0x8021], [rightBody+Z]
+    SET [0x8022], [pixel+Z]
     
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
@@ -109,45 +108,207 @@
 
 ; Definitions for the monitor's color palette
 :monitorPalette
-    DAT 0x0000          ; Black
-    DAT 0x000a          ; Dark Blue
-    DAT 0x00a0          ; Dark Green
-    DAT 0x00aa          ; Teal
-    DAT 0xa000          ; Dark Red
-    DAT 0x0a0a          ; Purple
-    DAT 0x0a50          ; Dark Orange
-    DAT 0x0aaa          ; Light Gray
-    DAT 0x0555          ; Dark Gray
-    DAT 0x055f          ; Light Blue
-    DAT 0x05f5          ; Light Green
-    DAT 0x05ff          ; Aqua
-    DAT 0x0f55          ; Light Red
-    DAT 0x0f5f          ; Violet
-    DAT 0x0ff5          ; Yellow
-    DAT 0x0fff          ; White
+    ; Used...
+        ; at (2,1) as bg color
+        ; at (5,1) as bg color
+        ; at (8,1) as bg color
+    DAT 0x0000
+    ; Used...
+        ; at (0,0) as fg color
+        ; at (0,1) as fg color
+        ; at (1,0) as fg color
+        ; at (1,1) as fg color
+        ; at (2,0) as fg color
+        ; at (2,1) as fg color
+        ; at (3,0) as fg color
+        ; at (3,1) as fg color
+        ; at (4,0) as fg color
+        ; at (4,1) as fg color
+        ; at (5,0) as fg color
+        ; at (5,1) as fg color
+        ; at (6,0) as fg color
+        ; at (6,1) as fg color
+        ; at (7,0) as fg color
+        ; at (7,1) as fg color
+        ; at (8,0) as fg color
+        ; at (8,1) as fg color
+    DAT 0x0777
+    ; Used...
+        ; at (0,1) as bg color
+        ; at (1,0) as bg color
+        ; at (1,1) as bg color
+        ; at (3,1) as bg color
+        ; at (4,0) as bg color
+        ; at (4,1) as bg color
+        ; at (6,1) as bg color
+        ; at (7,0) as bg color
+        ; at (7,1) as bg color
+    DAT 0x0f00
+
+
 ; Definitions for the monitor's font
 :monitorFont
-	DAT 0x0000, 0x0077
-	DAT 0x0307, 0x0707
-	DAT 0x07ff, 0xf712
-	DAT 0x3f67, 0x4000
-	DAT 0x6f50, 0x1206
-	DAT 0x0602, 0xf0ff
-	DAT 0x1218, 0x0000
-	DAT 0x0000, 0x0040
-	DAT 0x0707, 0x07f8
-	DAT 0x0003, 0x0300
-	DAT 0x0500, 0x0600
-	DAT 0x3010, 0x9090
-	DAT 0x0088, 0xcf9f
-	DAT 0x603c, 0x040f
-	DAT 0x0700, 0x0604
-	DAT 0x0000, 0x0000
-	DAT 0x1807, 0xfff7
-	DAT 0x0107, 0x0000
-	DAT 0x06fd, 0xfd06
+    ; Font Char 0
+    ; Used...
+        ; at (6,1)
+    ;       ;
+    ;      *;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;      *;
+    DAT 0x0000, 0x00e2
+    ; Font Char 1
+    ; Used...
+        ; at (3,1)
+    ;       ;
+    ;      *;
+    ;    *  ;
+    ;      *;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;    * *;
+    DAT 0x0000, 0x84ea
+    ; Font Char 2
+    ; Used...
+        ; at (2,1)
+        ; at (8,1)
+    ;*      ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x0100, 0x0000
+    ; Font Char 3
+    ; Used...
+        ; at (1,1)
+    ;*      ;
+    ;* * * *;
+    ;*      ;
+    ;*      ;
+    ;* *    ;
+    ;* *    ;
+    ;  *    ;
+    ;    *  ;
+    DAT 0x3f72, 0x8202
+    ; Font Char 4
+    ; Used...
+        ; at (0,0)
+        ; at (2,0)
+        ; at (3,0)
+        ; at (5,0)
+        ; at (6,0)
+        ; at (8,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x0000, 0x0000
+    ; Font Char 5
+    ; Used...
+        ; at (0,1)
+    ;       ;
+    ;      *;
+    ;    *  ;
+    ;    *  ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;    *  ;
+    DAT 0x0000, 0x8c42
+    ; Font Char 6
+    ; Used...
+        ; at (5,1)
+    ;       ;
+    ;       ;
+    ;*      ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x0400, 0x0000
+    ; Font Char 7
+    ; Used...
+        ; at (4,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;* *    ;
+    ;    *  ;
+    DAT 0x4040, 0x8000
+    ; Font Char 8
+    ; Used...
+        ; at (4,1)
+    ;* *    ;
+    ;*      ;
+    ;* *    ;
+    ;*   * *;
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    DAT 0x3fc5, 0x0808
+    ; Font Char 9
+    ; Used...
+        ; at (7,1)
+    ;*      ;
+    ;* *   *;
+    ;*   *  ;
+    ;* *    ;
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    DAT 0x3fca, 0x0402
+    ; Font Char 10
+    ; Used...
+        ; at (1,0)
+        ; at (7,0)
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;    * *;
+    ;* *   *;
+    ;    * *;
+    DAT 0x5f5f, 0xbfff
 
-:monitorVRAM
-    DAT 0               ; Monitor VRAM follows this, anything in the next
-                        ; 384 words will be displayed on the monitor
-                      
+
+:thiefHead
+	DAT 0x010A
+    DAT 0x1007
+    DAT 0x010A
+    
+:leftBody
+	DAT 0x1005
+    DAT 0x1001
+    DAT 0x1000
+    
+:rightBody
+	DAT 0x1003
+    DAT 0x1008
+    DAT 0x1009
+    
+    
+:pixel
+	DAT 0x2002
+    DAT 0x2006
+    DAT 0x2002
+
+
+            
