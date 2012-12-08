@@ -15,22 +15,26 @@
 ; Random number generator (no idea how it works)
 ; code from lowey2002 
 ; http://www.0x10cforum.com/forum/m/4932880/viewthread/2732760-pseudorandom-generator
-:setupRandom
-    SET A, 0x0000       ; minimum
-    SET B, 0x0064       ; maximum
-    SET C, 0x3E42       ; seed
-
 :random
-    SET X, C
-    MUL X, 0xE3D1
-    ADD X, 0x2B69
+    SET X, [randomSeed]
+    MUL X, 0xe3d1
+    ADD X, 0x2b69
     SHR X, 3
-    SET I, B
-    SUB I, A
+    SET I, [randomMax]
+    SUB I, [randomMin]
     MOD X, I
-    ADD X, A
-    SET C, X            ; new seed
+    ADD X, [randomMin]
+    SET [randomSeed], X ; New seed
     SET PC, POP
+
+:randomMin
+    DAT 0x0000
+
+:randomMax
+    DAT 0x0064
+
+:randomSeed
+    DAT 0x3e42
 
 ; Configures the clock to create an interrupt every 1/60 second and sets
 ; up the interrupt handler for it.
