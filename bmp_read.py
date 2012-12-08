@@ -60,5 +60,10 @@ if __name__ == "__main__":
 			if not notted(words) in unique_chars:
 				unique_chars.add(words)
 
-	print " chars: ", unique_chars
-	print "colors: ", color_palette
+	print ":monitorFont"
+	for char in unique_chars:
+		print "DAT %s, %s" % tuple([word for word in char])
+
+	print ":monitorPalette"
+	for color in color_palette:
+		print "DAT %s" % color
