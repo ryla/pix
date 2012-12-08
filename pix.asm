@@ -7,7 +7,7 @@
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
 
-; Main loop. Triggered every 1/60s by an interrup from the clock
+; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
     SET A, 2            ; Put keyboard into button down mode
     SET B, " "          ; See if the space bar is down
@@ -36,7 +36,15 @@
 ; Configures the monitor and the VRAM for the monitor. Note: time consuming
 :setupMonitor
     SET A, 0            ; Put monitor into set VRAM mode
-    SET B, monitorVRAM  ; Set the start of the monitors VRAM mapping
+    SET B, monitorVRAM  ; Set the start of the monitor's VRAM mapping
+    HWI [monitorHWaddr] ; Send settings to monitor. The monitor will still
+                        ; respond to interrupts while it's powering on
+    SET A, 1            ; Put monitor into set font mode
+    SET B, monitorFont  ; Set the start of the monitor's font map
+    HWI [monitorHWaddr] ; Send settings to monitor
+    SET A, 2            ; Put the monitor into set palette mode
+    SET B, monitorPalette
+                        ; Set the start of the monitor's font map
     HWI [monitorHWaddr] ; Send settings to monitor
     SET PC, POP         ; Return from subroutine
 
@@ -86,6 +94,29 @@
     DAT 0xf615, 0x7349  ; LEM1802 Monitor ID
 :monitorHWaddr
     DAT 0xffff          ; To be filled with HW address of monitor
+
+; Definitions for the monitor's color palette
+:monitorPalette
+    DAT 0x0000          ; Black
+    DAT 0x000a          ; Dark Blue
+    DAT 0x00a0          ; Dark Green
+    DAT 0x00aa          ; Teal
+    DAT 0xa000          ; Dark Red
+    DAT 0x0a0a          ; Purple
+    DAT 0x0a50          ; Dark Orange
+    DAT 0x0aaa          ; Light Gray
+    DAT 0x0555          ; Dark Gray
+    DAT 0x055f          ; Light Blue
+    DAT 0x05f5          ; Light Green
+    DAT 0x05ff          ; Aqua
+    DAT 0x0f55          ; Light Red
+    DAT 0x0f5f          ; Violet
+    DAT 0x0ff5          ; Yellow
+    DAT 0x0fff          ; White
+
+; Definitions for the monitor's font
+:monitorFont
+    DAT 0, 0
 
 :monitorVRAM
     DAT 0               ; Monitor VRAM follows this, anything in the next
