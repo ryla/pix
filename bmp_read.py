@@ -43,6 +43,33 @@ def notted(words):
 	word1, word2 = words
 	return (hex(0xffff ^ int(word1,16)), hex(0xffff ^ int(word2,16)))
 
+def make_bin_len_16(bin_thing):
+	bin_thing = bin_thing[2:]
+	return '0b%s%s' % ('0'*(16 - len(bin_thing)), bin_thing)
+
+def gen_palette_comment(char):
+	word1 = bin(int(char[0],16))
+	word2 = bin(int(char[1],16))
+	char = make_bin_len_16(word1)[2:]+make_bin_len_16(word2)[2:]
+	char = char
+	displayChar = list()
+	for y in range(8):
+		displayChar.append(['x']*4)
+	
+	for y in range(7,-1,-1):
+		for x in range(4):
+			displayChar[y][x] = char[x*8 + 7 - y]
+
+	def nice_format(c):
+		if c == '0':
+			return ' '
+		else:
+			return '*'
+
+	for y in range(8):
+		print ';' + ' '.join([nice_format(c) for c in displayChar[y]]) + ';'
+
+
 if __name__ == "__main__":
 	im = Image.open(sys.argv[1])
 
@@ -62,6 +89,7 @@ if __name__ == "__main__":
 
 	print ":monitorFont"
 	for char in unique_chars:
+		gen_palette_comment(char)
 		print "DAT %s, %s" % tuple([word for word in char])
 
 	print ":monitorPalette"
