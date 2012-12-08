@@ -16,25 +16,25 @@
 ; code from lowey2002 
 ; http://www.0x10cforum.com/forum/m/4932880/viewthread/2732760-pseudorandom-generator
 :random
-    SET X, [randomSeed]
+    SET X, [randomSeed] ; Set x to random seed
     MUL X, 0xe3d1
     ADD X, 0x2b69
     SHR X, 3
+    SET [randomSeed], X ; Save new seed
     SET I, [randomMax]
-    SUB I, [randomMin]
-    MOD X, I
-    ADD X, [randomMin]
-    SET [randomSeed], X ; New seed
-    SET PC, POP
+    SUB I, [randomMin]  ; Calc difference between bounds
+    MOD X, I            ; Reduces to difference between bounds
+    ADD X, [randomMin]  ; Increases to make sure x is above lower bound  
+    SET PC, POP         ; Return from subroutin
 
-:randomMin
-    DAT 0x0000
+:randomMin            
+    DAT 0x0000          ; Lower bound for random number
 
 :randomMax
-    DAT 0x0064
+    DAT 0x0064          ; Upper bound for random number    
 
-:randomSeed
-    DAT 0x3e42
+:randomSeed              
+    DAT 0x3e42          ; Seed for random number
 
 ; Configures the clock to create an interrupt every 1/60 second and sets
 ; up the interrupt handler for it.
