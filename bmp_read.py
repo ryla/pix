@@ -35,13 +35,7 @@ def read_grid_square(pixels, startx, starty, existing_colors):
     all_words = ''.join([str(i) for i in all_words])
     words = (make_len_4(hex(int('0b'+all_words[0:16],2))), 
             make_len_4(hex(int('0b'+all_words[16:32],2))))
-    local_palette = tuple([color for color in local_palette])
 
-    for (i,color) in enumerate(local_palette):
-        if color in existing_colors:
-            existing_colors[color][0] != i
-            words = notted(words)
-            return (words, local_palette)
     return (words, local_palette)
 
 def notted(words):
@@ -87,10 +81,10 @@ if __name__ == "__main__":
     for x in range(int(width/4)):
         for y in range(int(height/8)):
             words, local_palette = read_grid_square(pix, x*4, y*8, color_palette)
-            for (i,color) in enumerate(local_palette):
+            for color in local_palette:
                 if not color in color_palette:
                     color_palette[color] = list()
-                color_palette[color].append((i,(x,y)))
+                color_palette[color].append((local_palette[color],(x,y)))
             if not words in unique_chars and not notted(words) in unique_chars:
                 unique_chars[words] = list()
             if not notted(words) in unique_chars:
