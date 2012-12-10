@@ -1,4 +1,4 @@
-    JSR detectHW        ; Find the addresses of HW we care about
+   JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock, so mainLoop runs.
 
@@ -9,8 +9,28 @@
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
+    set A, 2			 ; Allow for keyboard input
+    set B, " "			 ; Look for spacebar press
+    HWI [keyboardHWaddr] ; Send hardware interupt
+    
+    IFE C, 1 			 ; If spacebar has been pressed
+    ; Insert code for starting the game here
+    JSR setRandomSeed	 ; Pass clockvalue to random seed
+    
+    ;;IFN C, 1
+    
+    
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
+
+; Get clock value from start screen to make random generatior
+; As random as possible
+:setRandomSeed		
+set A, 1			; Store number of ticks elapsed since last 
+					; Call to 0 in C register
+HWI [clockHWaddr]	; Send inturupt to clock
+set [randomSeed], C	; Save clock value to randomSeed
+SET PC, POP			; Return from subroutin
 
 ; Random number generator (no idea how it works)
 ; code from lowey2002 
