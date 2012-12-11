@@ -596,125 +596,26 @@
 
     ;;;; NUMBERS
     ; Font Char 46
-    ; Used...
-        ; at (2,0)
-    ;* * * *;
-    ;*   * *;
-    ;  *   *;
-    ;* *   *;
-    ;*   * *;
-    ;*   * *;
-    ;  * * *;
-    ;      *;
-    DAT 0x3b4d, 0x73ff
+    DAT 0x837d, 0x83ff ; 0 ; May be inverted?
+    ;0x7c82, 0x7c00
     ; Font Char 47
-    ; Used...
-        ; at (1,0)
-    ;* * * *;
-    ;*   * *;
-    ;    * *;
-    ;*   * *;
-    ;*   * *;
-    ;*   * *;
-    ;*   * *;
-    ;      *;
-    DAT 0x7b01, 0x7fff
+    DAT 0x7b01, 0x7fff ; 1
     ; Font Char 48
-    ; Used...
-        ; at (3,0)
-    ;* * * *;
-    ;*   * *;
-    ;  *   *;
-    ;* *   *;
-    ;*   * *;
-    ;* *   *;
-    ;  *   *;
-    ;*   * *;
-    DAT 0xbb6d, 0x93ff
+    DAT 0x3b4d, 0x73ff ; 2
     ; Font Char 49
-    ; Used...
-        ; at (8,0)
-    ;* * * *;
-    ;*   * *;
-    ;  *   *;
-    ;  *   *;
-    ;*   * *;
-    ;  *   *;
-    ;  *   *;
-    ;*   * *;
-    DAT 0x936d, 0x93ff
+    DAT 0xbb6d, 0x93ff ; 3
     ; Font Char 50
-    ; Used...
-        ; at (7,0)
-    ;* * * *;
-    ;      *;
-    ;* *   *;
-    ;* *   *;
-    ;*   * *;
-    ;*   * *;
-    ;  * * *;
-    ;  * * *;
-    DAT 0x3dcd, 0xf1ff
+    DAT 0xe1ef, 0x01ff ; 4
     ; Font Char 51
-    ; Used...
-        ; at (9,0)
-    ;* * * *;
-    ;*   * *;
-    ;  *   *;
-    ;  *   *;
-    ;*     *;
-    ;* *   *;
-    ;  *   *;
-    ;*   * *;
-    DAT 0xb36d, 0x83ff
+    DAT 0xb175, 0x8dff ; 5
     ; Font Char 52
-    ; Used...
-        ; at (5,0)
-    ;* * * *;
-    ;      *;
-    ;  * * *;
-    ;    * *;
-    ;* *   *;
-    ;* *   *;
-    ;  *   *;
-    ;*   * *;
-    DAT 0xb175, 0x8dff
+    DAT 0x836d, 0x9bff ; 6
     ; Font Char 53
-    ; Used...
-        ; at (0,0)
-    ;       ;
-    ;  *    ;
-    ;*   *  ;
-    ;*   *  ;
-    ;*   *  ;
-    ;*   *  ;
-    ;*   *  ;
-    ;  *    ;
-    DAT 0x7c82, 0x7c00
+    DAT 0x3dcd, 0xf1ff ; 7
     ; Font Char 54
-    ; Used...
-        ; at (4,0)
-    ;* * * *;
-    ;  *   *;
-    ;  *   *;
-    ;  *   *;
-    ;      *;
-    ;* *   *;
-    ;* *   *;
-    ;* *   *;
-    DAT 0xe1ef, 0x01ff
+    DAT 0x936d, 0x93ff ; 8
     ; Font Char 55
-    ; Used...
-        ; at (6,0)
-    ;* * * *;
-    ;*   * *;
-    ;  *   *;
-    ;  * * *;
-    ;    * *;
-    ;  *   *;
-    ;  *   *;
-    ;*   * *;
-    DAT 0x836d, 0x9bff
+    DAT 0xb36d, 0x83ff ; 9
 
 :monitorPalette
     ; Color 0 (black)
