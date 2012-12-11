@@ -88,6 +88,8 @@
     SET [0x80BE], [0x0000]
     SET [0x80BF], [0x0000]
 
+    JSR calcScore
+
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
@@ -95,12 +97,30 @@
 :calcScore
     set A, 1            ; Store ticks elapsed since clock reset in C
     HWI [clockHWaddr]   ; Send interrupt to clock
+    DIV C, 5
     SET [currentScore], C 
                         ; Set the current score to the clock value
-    DIV [currentScore], 2
-                        ; Divide score to keep the values small
+    JSR displayScore    ; Display the calculated digits
     SET PC, POP         ; Return from subroutine
 
+; Display the players current score
+:displayScore
+    SET X, 0x801f    		; Score display fist digit location
+    SET B, 1				; Digit to display
+:displayScoreLoop
+    SET Y, 0x042e			; Initialize digits to zero
+    
+    SET C, [currentScore]	; Set C to the players Current Score
+    DIV C, B				; Divide by B to "shift" C into the right cut off position
+    MOD C, 10				; Mod by 10 to "cut off" the desired digit
+    ADD Y, C				; Add the score dgit value to the display value
+    SET [X], Y				; Set X to the display digit
+    SUB X, 1				; Move over by one space
+    MUL B, 10				; Move to next digit that needs to be displayed
+    IFG X, 0x8019			; If we are not at the last display location
+    SET PC, displayScoreLoop ; Loop back to top
+    SET PC, POP         ; Return from subroutine
+    
 :currentScore            
     DAT 0x0000          ; Player's current score
 
@@ -113,7 +133,7 @@
     SET [randomSeed], C ; Save clock value to randomSeed
     SET PC, POP         ; Return from subroutine
 
-; Random number generator (no idea how it works)
+; Random number generator
 ; code from lowey2002 
 ; http://www.0x10cforum.com/forum/m/4932880/viewthread/2732760-pseudorandom-generator
 :random
@@ -364,8 +384,7 @@
 
     ;NUMBERS
     ; Font Char 46
-        DAT 0x837d, 0x83ff ; 0 ; May be inverted?
-    ;0x7c82, 0x7c00
+        DAT 0x837d, 0x83ff ; 0
     ; Font Char 47
         DAT 0x7b01, 0x7fff ; 1
     ; Font Char 48
@@ -399,23 +418,22 @@
     DAT 0x1007
     ;DAT 0x0106
     
-:thiefHead
-    DAT 0x2312
-    DAT 0x320F
-    DAT 0x2312
+:thiefHead ; (1,0)
+    DAT 0x2000 ; 0
+    DAT 0x201c ; 1
+    DAT 0x2000 ; 2
     
-:leftBody
-    DAT 0x320D
-    DAT 0x3209
-    DAT 0x3208
+:leftBody ; (0,1)
+    DAT 0x200a ; 0
+    DAT 0x2002 ; 1
+    DAT 0x201a ; 2
     
-:rightBody
-    DAT 0x320B
-    DAT 0x3210
-    DAT 0x3211
+:rightBody ; (1,1)
+    DAT 0x2003 ; 0
+    DAT 0x201b ; 1
+    DAT 0x200b ; 2
     
-:pixel
-    DAT 0x420A
-    DAT 0x420E
-    DAT 0x420A
-
+:pixel ; (2,1)
+    DAT 0x1016 ; 0
+    DAT 0x1019 ; 1
+    DAT 0x1019 ; 2
