@@ -254,301 +254,136 @@
 
 ; Definitions for the monitor's color palette
 :monitorPalette
-    ; Used...
-        ; at (0,0) as bg color
-        ; at (1,0) as bg color
-        ; at (2,0) as bg color
-        ; at (3,0) as bg color
-        ; at (4,0) as bg color
-        ; at (5,0) as bg color
-        ; at (6,0) as bg color
-        ; at (7,0) as fg color
+    ; Color 0 (black)
     DAT 0x0000
-    ; Used...
-        ; at (0,0) as fg color
-        ; at (1,0) as fg color
-        ; at (2,0) as fg color
-        ; at (3,0) as fg color
-        ; at (4,0) as fg color
-        ; at (5,0) as fg color
-        ; at (6,0) as fg color
-    DAT 0x0248
-
-; Used...
-        ; at (2,1) as bg color
-        ; at (5,1) as bg color
-        ; at (8,1) as bg color
-    DAT 0x0000
-    ; Used...
-        ; at (0,0) as fg color
-        ; at (0,1) as fg color
-        ; at (1,0) as fg color
-        ; at (1,1) as fg color
-        ; at (2,0) as fg color
-        ; at (2,1) as fg color
-        ; at (3,0) as fg color
-        ; at (3,1) as fg color
-        ; at (4,0) as fg color
-        ; at (4,1) as fg color
-        ; at (5,0) as fg color
-        ; at (5,1) as fg color
-        ; at (6,0) as fg color
-        ; at (6,1) as fg color
-        ; at (7,0) as fg color
-        ; at (7,1) as fg color
-        ; at (8,0) as fg color
-        ; at (8,1) as fg color
+    ; Color 1 (red)
+    DAT 0x0e33
+    ; Color 2 (person gray)
     DAT 0x0777
-    ; Used...
-        ; at (0,1) as bg color
-        ; at (1,0) as bg color
-        ; at (1,1) as bg color
-        ; at (3,1) as bg color
-        ; at (4,0) as bg color
-        ; at (4,1) as bg color
-        ; at (6,1) as bg color
-        ; at (7,0) as bg color
-        ; at (7,1) as bg color
-    DAT 0x0f00
+    ; Color 3 (building gray)
+    DAT 0x0ccc
+    ; Color 4 (number white)
+    DAT 0x0fff
 
 :monitorFont
+;THIEF
     ; Font Char 0
-    ; Used...
-        ; at (4,0)
-    ;* *    ;
-    ;  *    ;
-    ;  *    ;
-    ;  *    ;
-    ;  *    ;
-    ;  *    ;
-    ;  *    ;
-    ;* *    ;
-    DAT 0x81ff, 0x0
+                DAT 0xa0a0, 0x4000
     ; Font Char 1
-    ; Used...
-        ; at (1,0)
-    ;*      ;
-    ;*   * *;
-    ;*   * *;
-    ;*   * *;
-    ;*   * *;
-    ;*   * *;
-    ;*   * *;
-    ;*      ;
-    DAT 0xff00, 0x7e7e
+                DAT 0x0000, 0x90c8
     ; Font Char 2
-    ; Used...
-        ; at (7,0)
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    DAT 0xffff, 0xffff
+                DAT 0x0000, 0x84ea
     ; Font Char 3
-    ; Used...
-        ; at (3,0)
-    ;* *    ;
-    ;* *   *;
-    ;* *   *;
-    ;* *   *;
-    ;* *   *;
-    ;* *   *;
-    ;* *   *;
-    ;* *    ;
-    DAT 0xffff, 0x7e
+                DAT 0x3f72, 0x8202
     ; Font Char 4
-    ; Used...
-        ; at (5,0)
-    ;* * *  ;
-    ;* * *  ;
-    ;* * *  ;
-    ;* * *  ;
-    ;* * *  ;
-    ;* * *  ;
-    ;* * *  ;
-    ;* * *  ;
-    DAT 0xffff, 0xff00
+                DAT 0x0718, 0x2100
     ; Font Char 5
-    ; Used...
-        ; at (2,0)
-    ;*      ;
-    ;*      ;
-    ;*      ;
-    ;*      ;
-    ;*      ;
-    ;*      ;
-    ;*      ;
-    ;*      ;
-    DAT 0xff00, 0x0
+                DAT 0x8080, 0x0000
     ; Font Char 6
-    ; Used...
-        ; at (0,0)
-    ;       ;
-    ;  * *  ;
-    ;  * *  ;
-    ;  * *  ;
-    ;  * *  ;
-    ;  * *  ;
-    ;  * *  ;
-    ;       ;
-    DAT 0x007e, 0x7e00
+                DAT 0x0000, 0x88e4
     ; Font Char 7
-    ; Used...
-        ; at (6,0)
-    ;* * *  ;
-    ;    *  ;
-    ;    *  ;
-    ;    *  ;
-    ;    *  ;
-    ;    *  ;
-    ;    *  ;
-    ;* * *  ;
-    DAT 0x8181, 0xff00
-
-;Dude info
-    ; Font Char 0
-    ; Used...
-        ; at (6,1)
-    ;       ;
-    ;      *;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;      *;
-    ;      *;
-    ;      *;
-    DAT 0x0000, 0x00e2
-    ; Font Char 1
-    ; Used...
-        ; at (3,1)
-    ;       ;
-    ;      *;
-    ;    *  ;
-    ;      *;
-    ;       ;
-    ;      *;
-    ;      *;
-    ;    * *;
-    DAT 0x0000, 0x84ea
-    ; Font Char 2
-    ; Used...
-        ; at (2,1)
-        ; at (8,1)
-    ;*      ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    DAT 0x0100, 0x0000
-    ; Font Char 3
-    ; Used...
-        ; at (1,1)
-    ;*      ;
-    ;* * * *;
-    ;*      ;
-    ;*      ;
-    ;* *    ;
-    ;* *    ;
-    ;  *    ;
-    ;    *  ;
-    DAT 0x3f72, 0x8202
-    ; Font Char 4
-    ; Used...
-        ; at (0,0)
-        ; at (2,0)
-        ; at (3,0)
-        ; at (5,0)
-        ; at (6,0)
-        ; at (8,0)
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    DAT 0x0000, 0x0000
-    ; Font Char 5
-    ; Used...
-        ; at (0,1)
-    ;       ;
-    ;      *;
-    ;    *  ;
-    ;    *  ;
-    ;       ;
-    ;       ;
-    ;      *;
-    ;    *  ;
-    DAT 0x0000, 0x8c42
-    ; Font Char 6
-    ; Used...
-        ; at (5,1)
-    ;       ;
-    ;       ;
-    ;*      ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    DAT 0x0400, 0x0000
-    ; Font Char 7
-    ; Used...
-        ; at (4,0)
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;       ;
-    ;* *    ;
-    ;    *  ;
-    DAT 0x4040, 0x8000
+                DAT 0x7eca, 0x1110
     ; Font Char 8
-    ; Used...
-        ; at (4,1)
-    ;* *    ;
-    ;*      ;
-    ;* *    ;
-    ;*   * *;
-    ;*      ;
-    ;*      ;
-    ;  *    ;
-    ;  *    ;
-    DAT 0x3fc5, 0x0808
+                DAT 0x0000, 0x0071
     ; Font Char 9
-    ; Used...
-        ; at (7,1)
-    ;*      ;
-    ;* *   *;
-    ;*   *  ;
-    ;* *    ;
-    ;*      ;
-    ;*      ;
-    ;  *    ;
-    ;  *    ;
-    DAT 0x3fca, 0x0402
+                DAT 0x0000, 0x01e2
     ; Font Char 10
-    ; Used...
-        ; at (1,0)
-        ; at (7,0)
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;* * * *;
-    ;    * *;
-    ;* *   *;
-    ;    * *;
-    DAT 0x5f5f, 0xbfff
+                DAT 0x0000, 0x8c42
+    ; Font Char 11
+                DAT 0x3fca, 0x0402
+    ; Font Char 12
+                DAT 0x0000, 0x8000
+    ; Font Char 13
+                DAT 0x031c, 0x0000
+    ; Font Char 14
+                DAT 0x3fc5, 0x0810
+    ; Font Char 15
+                DAT 0xf454, 0x8840
+    ; Font Char 16
+                DAT 0x0000, 0x001c
+    ; Font Char 17
+                DAT 0xe8a8, 0x1080
+    ; Font Char 18
+                DAT 0x0000, 0x2040
+    ; Font Char 19
+                DAT 0xd050, 0x2000
+    ; Font Char 20
+                DAT 0x1fe2, 0x0402
+    ; Font Char 21
+                DAT 0x0f71, 0x0201
+    ; Font Char 22
+                DAT 0x0100, 0x0000
+    ; Font Char 23
+                DAT 0x0000, 0x4080
+    ; Font Char 24
+                DAT 0x0000, 0x2018
+    ; Font Char 25
+                DAT 0x0000, 0x0000
+    ; Font Char 26
+                DAT 0x0000, 0x00e2
+    ; Font Char 27
+                DAT 0x3fc5, 0x0808
+    ; Font Char 28
+                DAT 0x4040, 0x8000
+
+  ;BUILDING
+    ; Font Char 29
+                DAT 0x0000, 0x6202
+    ; Font Char 30
+                DAT 0x6200, 0x0062
+    ; Font Char 31
+                DAT 0x07fd, 0x9dff
+    ; Font Char 32
+                DAT 0x00ff, 0xffff
+    ; Font Char 33
+                DAT 0xfff8, 0x0262
+    ; Font Char 34
+                DAT 0xffff, 0xffff
+    ; Font Char 35
+                DAT 0x0062, 0x6200
+    ; Font Char 36
+                DAT 0xffff, 0xff00
+    ; Font Char 37
+                DAT 0xff00, 0x0000
+    ; Font Char 38
+                DAT 0x0062, 0x02f8
+    ; Font Char 39
+                DAT 0x02f8, 0xffff
+    ; Font Char 40
+                DAT 0xffff, 0xf802
+    ; Font Char 41
+                DAT 0x0000, 0x00ff
+    ; Font Char 42
+                DAT 0x0000, 0x0000
+    ; Font Char 43
+                DAT 0x0000, 0x6262
+    ; Font Char 44
+                DAT 0xffff, 0x0000
+    ; Font Char 45
+                DAT 0xf8ff, 0xffff
+
+    ;NUMBERS
+    ; Font Char 46
+    DAT 0x837d, 0x83ff ; 0 ; May be inverted?
+    ;0x7c82, 0x7c00
+    ; Font Char 47
+    DAT 0x7b01, 0x7fff ; 1
+    ; Font Char 48
+    DAT 0x3b4d, 0x73ff ; 2
+    ; Font Char 49
+    DAT 0xbb6d, 0x93ff ; 3
+    ; Font Char 50
+    DAT 0xe1ef, 0x01ff ; 4
+    ; Font Char 51
+    DAT 0xb175, 0x8dff ; 5
+    ; Font Char 52
+    DAT 0x836d, 0x9bff ; 6
+    ; Font Char 53
+    DAT 0x3dcd, 0xf1ff ; 7
+    ; Font Char 54
+    DAT 0x936d, 0x93ff ; 8
+    ; Font Char 55
+    DAT 0xb36d, 0x83ff ; 9
 
 :blockLeft
     DAT 0x0106
