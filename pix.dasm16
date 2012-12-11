@@ -88,6 +88,8 @@
     SET [0x80BE], [0x0000]
     SET [0x80BF], [0x0000]
 
+    JSR calcScore
+
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
@@ -95,12 +97,30 @@
 :calcScore
     set A, 1            ; Store ticks elapsed since clock reset in C
     HWI [clockHWaddr]   ; Send interrupt to clock
+    DIV C, 5
     SET [currentScore], C 
                         ; Set the current score to the clock value
-    DIV [currentScore], 2
-                        ; Divide score to keep the values small
+    JSR displayScore
     SET PC, POP         ; Return from subroutine
 
+; Display the players current score
+:displayScore
+    SET X, 0x801f    		; Score display fist digit location
+    SET B, 1				; Digit to display
+:displayScoreLoop
+    SET Y, 0x042e
+    
+    SET C, [currentScore]	; Set C to the players Current Score
+    DIV C, B				; divide the score by B to get digit at specific location
+    MOD C, 10
+    ADD Y, C
+    SET [X], Y
+    SUB X, 1				; Move over by one space
+    MUL B, 10				; Move to next digit that needs to be displayed
+    IFG X, 0x8019			; If we are not at the last display location
+    SET PC, displayScoreLoop ; Loop back to top
+    SET PC, POP         ; Return from subroutine
+    
 :currentScore            
     DAT 0x0000          ; Player's current score
 
@@ -113,7 +133,7 @@
     SET [randomSeed], C ; Save clock value to randomSeed
     SET PC, POP         ; Return from subroutine
 
-; Random number generator (no idea how it works)
+; Random number generator
 ; code from lowey2002 
 ; http://www.0x10cforum.com/forum/m/4932880/viewthread/2732760-pseudorandom-generator
 :random
@@ -364,8 +384,7 @@
 
     ;NUMBERS
     ; Font Char 46
-        DAT 0x837d, 0x83ff ; 0 ; May be inverted?
-    ;0x7c82, 0x7c00
+        DAT 0x837d, 0x83ff ; 0
     ; Font Char 47
         DAT 0x7b01, 0x7fff ; 1
     ; Font Char 48
@@ -418,4 +437,3 @@
     DAT 0x420A
     DAT 0x420E
     DAT 0x420A
-
