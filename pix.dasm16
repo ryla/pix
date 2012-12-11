@@ -2,6 +2,7 @@
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock to tick at 1/60s
     JSR splashScreen    ; Display splash screen and wait for spacebar
+    JSR setRandomSeed   ; Set the random seed from the clock
     JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
  
 :infiniteStall
