@@ -105,7 +105,7 @@
 
 ; Display the players current score
 :displayScore
-    SET X, 0x801f			; Score display fist digit location
+    SET X, 0x801f    		; Score display fist digit location
     SET B, 1				; Digit to display
 :displayScoreLoop
     SET Y, 0x042e			; Initialize digits to zero
@@ -418,22 +418,22 @@
     DAT 0x1007
     ;DAT 0x0106
     
-:thiefHead
-    DAT 0x2312
-    DAT 0x320F
-    DAT 0x2312
+:thiefHead ; (1,0)
+    DAT 0x2000 ; 0
+    DAT 0x201c ; 1
+    DAT 0x2000 ; 2
     
-:leftBody
-    DAT 0x320D
-    DAT 0x3209
-    DAT 0x3208
+:leftBody ; (0,1)
+    DAT 0x200a ; 0
+    DAT 0x2002 ; 1
+    DAT 0x201a ; 2
     
-:rightBody
-    DAT 0x320B
-    DAT 0x3210
-    DAT 0x3211
+:rightBody ; (1,1)
+    DAT 0x2003 ; 0
+    DAT 0x201b ; 1
+    DAT 0x200b ; 2
     
-:pixel
-    DAT 0x420A
-    DAT 0x420E
-    DAT 0x420A
+:pixel ; (2,1)
+    DAT 0x1016 ; 0
+    DAT 0x1019 ; 1
+    DAT 0x1019 ; 2
