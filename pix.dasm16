@@ -93,7 +93,7 @@
 
 ; Use the clock to calculate the users score
 :calcScore
-    set A, 1	        ; Store ticks elapsed since clock reset in C
+    set A, 1            ; Store ticks elapsed since clock reset in C
     HWI [clockHWaddr]   ; Send interrupt to clock
     SET [currentScore], C 
                         ; Set the current score to the clock value
@@ -106,12 +106,12 @@
 
 ; Get clock value from start screen to make random generatior
 ; As random as possible
-:setRandomSeed		
+:setRandomSeed        
     SET A, 1            ; Store number of ticks elapsed since last 
                         ; call to 0 in C register
-    HWI [clockHWaddr]	; Send interrupt to clock
-    SET [randomSeed], C	; Save clock value to randomSeed
-    SET PC, POP	        ; Return from subroutine
+    HWI [clockHWaddr]   ; Send interrupt to clock
+    SET [randomSeed], C ; Save clock value to randomSeed
+    SET PC, POP         ; Return from subroutine
 
 ; Random number generator (no idea how it works)
 ; code from lowey2002 
