@@ -22,14 +22,27 @@
     
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
+; Use the clock to calculate the users score
+:calcScore
+set A, 1	      ; Store number of ticks elapsed since last call to 0 in C register
+HWI [clockHWaddr]     ; Send Interupt to clock
+SET [currentScore], C ; Set the current score to the clock value
+DIV [currentScore], 2 ; Divide score by some constant to keep the values reasonably small
+SET PC, POP
+
+:currentScore            
+    DAT 0x0000          ; Users current score
+
+
+
 
 ; Get clock value from start screen to make random generatior
 ; As random as possible
 :setRandomSeed		
-set A, 1			; Store number of ticks elapsed since last 
+SET A, 1			; Store number of ticks elapsed since last 
 					; Call to 0 in C register
 HWI [clockHWaddr]	; Send inturupt to clock
-set [randomSeed], C	; Save clock value to randomSeed
+SET [randomSeed], C	; Save clock value to randomSeed
 SET PC, POP			; Return from subroutin
 
 ; Random number generator (no idea how it works)
