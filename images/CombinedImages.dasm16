@@ -1,0 +1,900 @@
+:monitorFont
+  ;;;; THIEF
+    ; Font Char 0
+    ; Used...
+        ; at (1,0)
+        ; at (7,0)
+        ; at (16,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;* *    ;
+    ;    *  ;
+    ;* *    ;
+    DAT 0xa0a0, 0x4000
+    ; Font Char 1
+    ; Used...
+        ; at (9,1)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;    *  ;
+    ;       ;
+    ;      *;
+    ;    * *;
+    DAT 0x0000, 0x90c8
+    ; Font Char 2
+    ; Used...
+        ; at (3,1)
+    ;       ;
+    ;      *;
+    ;    *  ;
+    ;      *;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;    * *;
+    DAT 0x0000, 0x84ea
+    ; Font Char 3
+    ; Used...
+        ; at (1,1)
+    ;*      ;
+    ;* * * *;
+    ;*      ;
+    ;*      ;
+    ;* *    ;
+    ;* *    ;
+    ;  *    ;
+    ;    *  ;
+    DAT 0x3f72, 0x8202
+    ; Font Char 4
+    ; Used...
+        ; at (22,1)
+    ;*   *  ;
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    ;    *  ;
+    ;       ;
+    ;       ;
+    DAT 0x0718, 0x2100
+    ; Font Char 5
+    ; Used...
+        ; at (10,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;* *    ;
+    DAT 0x8080, 0x0000
+    ; Font Char 6
+    ; Used...
+        ; at (12,1)
+    ;       ;
+    ;       ;
+    ;      *;
+    ;    *  ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;    * *;
+    DAT 0x0000, 0x88e4
+    ; Font Char 7
+    ; Used...
+        ; at (10,1)
+    ;    *  ;
+    ;* *    ;
+    ;*      ;
+    ;* *    ;
+    ;*   * *;
+    ;*      ;
+    ;* *    ;
+    ;  *    ;
+    DAT 0x7eca, 0x1110
+    ; Font Char 8
+    ; Used...
+        ; at (18,1)
+    ;      *;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;      *;
+    ;       ;
+    DAT 0x0000, 0x0071
+    ; Font Char 9
+    ; Used...
+        ; at (15,1)
+    ;    *  ;
+    ;      *;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;      *;
+    DAT 0x0000, 0x01e2
+    ; Font Char 10
+    ; Used...
+        ; at (0,1)
+    ;       ;
+    ;      *;
+    ;    *  ;
+    ;    *  ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;    *  ;
+    DAT 0x0000, 0x8c42
+    ; Font Char 11
+    ; Used...
+        ; at (7,1)
+    ;*      ;
+    ;* *   *;
+    ;*   *  ;
+    ;* *    ;
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    DAT 0x3fca, 0x0402
+    ; Font Char 12
+    ; Used...
+        ; at (18,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;    *  ;
+    DAT 0x0000, 0x8000
+    ; Font Char 13
+    ; Used...
+        ; at (25,1)
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    ;  *    ;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x031c, 0x0000
+    ; Font Char 14
+    ; Used...
+        ; at (13,1)
+    ;* *    ;
+    ;*      ;
+    ;* *    ;
+    ;*   *  ;
+    ;*     *;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    DAT 0x3fc5, 0x0810
+    ; Font Char 15
+    ; Used...
+        ; at (25,0)
+    ;       ;
+    ;       ;
+    ;* *    ;
+    ;    *  ;
+    ;* *    ;
+    ;*      ;
+    ;* *   *;
+    ;*   *  ;
+    DAT 0xf454, 0x8840
+    ; Font Char 16
+    ; Used...
+        ; at (24,1)
+    ;       ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;      *;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x0000, 0x001c
+    ; Font Char 17
+    ; Used...
+        ; at (22,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;* *    ;
+    ;    *  ;
+    ;* *    ;
+    ;*      ;
+    ;* *   *;
+    DAT 0xe8a8, 0x1080
+    ; Font Char 18
+    ; Used...
+        ; at (24,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;    *  ;
+    ;      *;
+    ;       ;
+    DAT 0x0000, 0x2040
+    ; Font Char 19
+    ; Used...
+        ; at (19,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;* *    ;
+    ;    *  ;
+    ;* *    ;
+    ;*      ;
+    DAT 0xd050, 0x2000
+    ; Font Char 20
+    ; Used...
+        ; at (16,1)
+    ;*      ;
+    ;* *   *;
+    ;*   *  ;
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    ;  *    ;
+    DAT 0x1fe2, 0x0402
+    ; Font Char 21
+    ; Used...
+        ; at (19,1)
+    ;* *   *;
+    ;*   *  ;
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    ;  *    ;
+    ;       ;
+    DAT 0x0f71, 0x0201
+    ; Font Char 22
+    ; Used...
+        ; at (2,1)
+    ;*      ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x0100, 0x0000
+    ; Font Char 23
+    ; Used...
+        ; at (21,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;    *  ;
+    ;      *;
+    DAT 0x0000, 0x4080
+    ; Font Char 24
+    ; Used...
+        ; at (21,1)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;    *  ;
+    ;       ;
+    ;       ;
+    DAT 0x0000, 0x2018
+    ; Font Char 25
+    ; Used...
+        ; at (0,0)
+        ; at (2,0)
+        ; at (3,0)
+        ; at (5,0)
+        ; at (5,1)
+        ; at (6,0)
+        ; at (8,0)
+        ; at (8,1)
+        ; at (9,0)
+        ; at (11,0)
+        ; at (11,1)
+        ; at (12,0)
+        ; at (14,0)
+        ; at (14,1)
+        ; at (15,0)
+        ; at (17,0)
+        ; at (17,1)
+        ; at (20,0)
+        ; at (20,1)
+        ; at (23,0)
+        ; at (23,1)
+        ; at (26,0)
+        ; at (26,1)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x0000, 0x0000
+    ; Font Char 26
+    ; Used...
+        ; at (6,1)
+    ;       ;
+    ;      *;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;      *;
+    DAT 0x0000, 0x00e2
+    ; Font Char 27
+    ; Used...
+        ; at (4,1)
+    ;* *    ;
+    ;*      ;
+    ;* *    ;
+    ;*   * *;
+    ;*      ;
+    ;*      ;
+    ;  *    ;
+    ;  *    ;
+    DAT 0x3fc5, 0x0808
+    ; Font Char 28
+    ; Used...
+        ; at (4,0)
+        ; at (13,0)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;* *    ;
+    ;    *  ;
+    DAT 0x4040, 0x8000
+
+
+  ;;;; BUILDING
+    ; Font Char 29
+    ; Used...
+        ; at (5,0)
+        ; at (13,0)
+    ;       ;
+    ;    * *;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;    *  ;
+    ;    *  ;
+    ;       ;
+    DAT 0x0000, 0x6202
+    ; Font Char 30
+    ; Used...
+        ; at (8,0)
+        ; at (9,0)
+    ;       ;
+    ;*     *;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;*     *;
+    ;*     *;
+    ;       ;
+    DAT 0x6200, 0x0062
+    ; Font Char 31
+    ; Used...
+        ; at (0,0)
+    ;* * * *;
+    ;*     *;
+    ;* * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  *   *;
+    ;  *   *;
+    ;  * * *;
+    DAT 0x07fd, 0x9dff
+    ; Font Char 32
+    ; Used...
+        ; at (10,1)
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    DAT 0x00ff, 0xffff
+    ; Font Char 33
+    ; Used...
+        ; at (3,0)
+        ; at (11,0)
+    ;*      ;
+    ;*   * *;
+    ;*      ;
+    ;* *    ;
+    ;* *    ;
+    ;* *   *;
+    ;* *   *;
+    ;* *    ;
+    DAT 0xfff8, 0x0262
+    ; Font Char 34
+    ; Used...
+        ; at (6,1)
+        ; at (14,1)
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    DAT 0xffff, 0xffff
+    ; Font Char 35
+    ; Used...
+        ; at (1,0)
+    ;       ;
+    ;  * *  ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;  * *  ;
+    ;  * *  ;
+    ;       ;
+    DAT 0x0062, 0x6200
+    ; Font Char 36
+    ; Used...
+        ; at (7,1)
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    DAT 0xffff, 0xff00
+    ; Font Char 37
+    ; Used...
+        ; at (0,1)
+    ;*      ;
+    ;*      ;
+    ;*      ;
+    ;*      ;
+    ;*      ;
+    ;*      ;
+    ;*      ;
+    ;*      ;
+    DAT 0xff00, 0x0000
+    ; Font Char 38
+    ; Used...
+        ; at (2,0)
+    ;       ;
+    ;  * *  ;
+    ;       ;
+    ;      *;
+    ;      *;
+    ;  *   *;
+    ;  *   *;
+    ;      *;
+    DAT 0x0062, 0x02f8
+    ; Font Char 39
+    ; Used...
+        ; at (10,0)
+    ;    * *;
+    ;*   * *;
+    ;    * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    DAT 0x02f8, 0xffff
+    ; Font Char 40
+    ; Used...
+        ; at (7,0)
+    ;* *    ;
+    ;* *   *;
+    ;* *    ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    ;* * *  ;
+    DAT 0xffff, 0xf802
+    ; Font Char 41
+    ; Used...
+        ; at (2,1)
+    ;      *;
+    ;      *;
+    ;      *;
+    ;      *;
+    ;      *;
+    ;      *;
+    ;      *;
+    ;      *;
+    DAT 0x0000, 0x00ff
+    ; Font Char 42
+    ; Used...
+        ; at (1,1)
+        ; at (4,1)
+        ; at (5,1)
+        ; at (8,1)
+        ; at (9,1)
+        ; at (12,1)
+        ; at (13,1)
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;       ;
+    DAT 0x0000, 0x0000
+    ; Font Char 43
+    ; Used...
+        ; at (4,0)
+        ; at (12,0)
+    ;       ;
+    ;    * *;
+    ;       ;
+    ;       ;
+    ;       ;
+    ;    * *;
+    ;    * *;
+    ;       ;
+    DAT 0x0000, 0x6262
+    ; Font Char 44
+    ; Used...
+        ; at (3,1)
+        ; at (11,1)
+    ;* *    ;
+    ;* *    ;
+    ;* *    ;
+    ;* *    ;
+    ;* *    ;
+    ;* *    ;
+    ;* *    ;
+    ;* *    ;
+    DAT 0xffff, 0x0000
+    ; Font Char 45
+    ; Used...
+        ; at (6,0)
+        ; at (14,0)
+    ;  * * *;
+    ;  * * *;
+    ;  * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    ;* * * *;
+    DAT 0xf8ff, 0xffff
+
+    ;;;; NUMBERS
+    ; Font Char 46
+    ; Used...
+        ; at (2,0)
+    ;* * * *;
+    ;*   * *;
+    ;  *   *;
+    ;* *   *;
+    ;*   * *;
+    ;*   * *;
+    ;  * * *;
+    ;      *;
+    DAT 0x3b4d, 0x73ff
+    ; Font Char 47
+    ; Used...
+        ; at (1,0)
+    ;* * * *;
+    ;*   * *;
+    ;    * *;
+    ;*   * *;
+    ;*   * *;
+    ;*   * *;
+    ;*   * *;
+    ;      *;
+    DAT 0x7b01, 0x7fff
+    ; Font Char 48
+    ; Used...
+        ; at (3,0)
+    ;* * * *;
+    ;*   * *;
+    ;  *   *;
+    ;* *   *;
+    ;*   * *;
+    ;* *   *;
+    ;  *   *;
+    ;*   * *;
+    DAT 0xbb6d, 0x93ff
+    ; Font Char 49
+    ; Used...
+        ; at (8,0)
+    ;* * * *;
+    ;*   * *;
+    ;  *   *;
+    ;  *   *;
+    ;*   * *;
+    ;  *   *;
+    ;  *   *;
+    ;*   * *;
+    DAT 0x936d, 0x93ff
+    ; Font Char 50
+    ; Used...
+        ; at (7,0)
+    ;* * * *;
+    ;      *;
+    ;* *   *;
+    ;* *   *;
+    ;*   * *;
+    ;*   * *;
+    ;  * * *;
+    ;  * * *;
+    DAT 0x3dcd, 0xf1ff
+    ; Font Char 51
+    ; Used...
+        ; at (9,0)
+    ;* * * *;
+    ;*   * *;
+    ;  *   *;
+    ;  *   *;
+    ;*     *;
+    ;* *   *;
+    ;  *   *;
+    ;*   * *;
+    DAT 0xb36d, 0x83ff
+    ; Font Char 52
+    ; Used...
+        ; at (5,0)
+    ;* * * *;
+    ;      *;
+    ;  * * *;
+    ;    * *;
+    ;* *   *;
+    ;* *   *;
+    ;  *   *;
+    ;*   * *;
+    DAT 0xb175, 0x8dff
+    ; Font Char 53
+    ; Used...
+        ; at (0,0)
+    ;       ;
+    ;  *    ;
+    ;*   *  ;
+    ;*   *  ;
+    ;*   *  ;
+    ;*   *  ;
+    ;*   *  ;
+    ;  *    ;
+    DAT 0x7c82, 0x7c00
+    ; Font Char 54
+    ; Used...
+        ; at (4,0)
+    ;* * * *;
+    ;  *   *;
+    ;  *   *;
+    ;  *   *;
+    ;      *;
+    ;* *   *;
+    ;* *   *;
+    ;* *   *;
+    DAT 0xe1ef, 0x01ff
+    ; Font Char 55
+    ; Used...
+        ; at (6,0)
+    ;* * * *;
+    ;*   * *;
+    ;  *   *;
+    ;  * * *;
+    ;    * *;
+    ;  *   *;
+    ;  *   *;
+    ;*   * *;
+    DAT 0x836d, 0x9bff
+
+:monitorPalette
+    ; Color 0 (black)
+      ; Used in walking_jumping...
+        ; at (0,0) as fg color
+        ; at (0,1) as fg color
+        ; at (1,0) as fg color
+        ; at (1,1) as fg color
+        ; at (2,0) as fg color
+        ; at (2,1) as bg color
+        ; at (3,0) as fg color
+        ; at (3,1) as fg color
+        ; at (4,0) as fg color
+        ; at (4,1) as fg color
+        ; at (5,0) as fg color
+        ; at (5,1) as bg color
+        ; at (6,0) as fg color
+        ; at (6,1) as fg color
+        ; at (7,0) as fg color
+        ; at (7,1) as fg color
+        ; at (8,0) as fg color
+        ; at (8,1) as bg color
+        ; at (9,0) as fg color
+        ; at (9,1) as fg color
+        ; at (10,0) as fg color
+        ; at (10,1) as fg color
+        ; at (11,0) as fg color
+        ; at (11,1) as bg color
+        ; at (12,0) as fg color
+        ; at (12,1) as fg color
+        ; at (13,0) as fg color
+        ; at (13,1) as fg color
+        ; at (14,0) as fg color
+        ; at (14,1) as bg color
+        ; at (15,0) as fg color
+        ; at (15,1) as fg color
+        ; at (16,0) as fg color
+        ; at (16,1) as fg color
+        ; at (17,0) as fg color
+        ; at (17,1) as bg color
+        ; at (18,0) as fg color
+        ; at (18,1) as fg color
+        ; at (19,0) as fg color
+        ; at (19,1) as fg color
+        ; at (20,0) as bg color
+        ; at (20,1) as fg color
+        ; at (21,0) as fg color
+        ; at (21,1) as fg color
+        ; at (22,0) as fg color
+        ; at (22,1) as fg color
+        ; at (23,0) as bg color
+        ; at (23,1) as fg color
+        ; at (24,0) as fg color
+        ; at (24,1) as fg color
+        ; at (25,0) as fg color
+        ; at (25,1) as fg color
+        ; at (26,0) as bg color
+        ; at (26,1) as fg color
+      ; Used in building...
+        ; at (0,0) as bg color
+        ; at (0,1) as bg color
+        ; at (1,0) as bg color
+        ; at (2,0) as bg color
+        ; at (2,1) as bg color
+        ; at (3,0) as bg color
+        ; at (3,1) as bg color
+        ; at (4,0) as bg color
+        ; at (5,0) as bg color
+        ; at (6,0) as bg color
+        ; at (6,1) as fg color
+        ; at (7,0) as bg color
+        ; at (7,1) as bg color
+        ; at (8,0) as bg color
+        ; at (9,0) as bg color
+        ; at (10,0) as bg color
+        ; at (10,1) as bg color
+        ; at (11,0) as bg color
+        ; at (11,1) as bg color
+        ; at (12,0) as bg color
+        ; at (13,0) as bg color
+        ; at (14,0) as bg color
+        ; at (14,1) as fg color
+      ; Used in numbers...
+        ; at (0,0) as bg color
+        ; at (1,0) as bg color
+        ; at (2,0) as bg color
+        ; at (3,0) as bg color
+        ; at (4,0) as bg color
+        ; at (5,0) as bg color
+        ; at (6,0) as bg color
+        ; at (7,0) as bg color
+        ; at (8,0) as bg color
+        ; at (9,0) as bg color
+    DAT 0x0000
+    ; Color 1 (red)
+      ; Used in walking_jumping...
+        ; at (2,1) as fg color
+        ; at (5,1) as fg color
+        ; at (8,1) as fg color
+        ; at (11,1) as fg color
+        ; at (14,1) as fg color
+        ; at (17,1) as fg color
+        ; at (20,0) as fg color
+        ; at (23,0) as fg color
+        ; at (26,0) as fg color
+    DAT 0x0e33
+    ; Color 2 (person gray)
+      ; Used in walking_jumping...
+        ; at (0,1) as bg color
+        ; at (1,0) as bg color
+        ; at (1,1) as bg color
+        ; at (3,1) as bg color
+        ; at (4,0) as bg color
+        ; at (4,1) as bg color
+        ; at (6,1) as bg color
+        ; at (7,0) as bg color
+        ; at (7,1) as bg color
+        ; at (9,1) as bg color
+        ; at (10,0) as bg color
+        ; at (10,1) as bg color
+        ; at (12,1) as bg color
+        ; at (13,0) as bg color
+        ; at (13,1) as bg color
+        ; at (15,1) as bg color
+        ; at (16,0) as bg color
+        ; at (16,1) as bg color
+        ; at (18,0) as bg color
+        ; at (18,1) as bg color
+        ; at (19,0) as bg color
+        ; at (19,1) as bg color
+        ; at (21,0) as bg color
+        ; at (21,1) as bg color
+        ; at (22,0) as bg color
+        ; at (22,1) as bg color
+        ; at (24,0) as bg color
+        ; at (24,1) as bg color
+        ; at (25,0) as bg color
+        ; at (25,1) as bg color
+    DAT 0x0777
+    ; Color 3 (building gray)
+      ; Used in building...
+        ; at (0,0) as fg color
+        ; at (0,1) as fg color
+        ; at (1,0) as fg color
+        ; at (1,1) as fg color
+        ; at (2,0) as fg color
+        ; at (2,1) as fg color
+        ; at (3,0) as fg color
+        ; at (3,1) as fg color
+        ; at (4,0) as fg color
+        ; at (4,1) as fg color
+        ; at (5,0) as fg color
+        ; at (5,1) as fg color
+        ; at (6,0) as fg color
+        ; at (7,0) as fg color
+        ; at (7,1) as fg color
+        ; at (8,0) as fg color
+        ; at (8,1) as fg color
+        ; at (9,0) as fg color
+        ; at (9,1) as fg color
+        ; at (10,0) as fg color
+        ; at (10,1) as fg color
+        ; at (11,0) as fg color
+        ; at (11,1) as fg color
+        ; at (12,0) as fg color
+        ; at (12,1) as fg color
+        ; at (13,0) as fg color
+        ; at (13,1) as fg color
+        ; at (14,0) as fg color
+    DAT 0x0ccc
+    ; Color 4 (number white)
+      ; Used in numbers...
+        ; at (0,0) as fg color
+        ; at (1,0) as fg color
+        ; at (2,0) as fg color
+        ; at (3,0) as fg color
+        ; at (4,0) as fg color
+        ; at (5,0) as fg color
+        ; at (6,0) as fg color
+        ; at (7,0) as fg color
+        ; at (8,0) as fg color
+        ; at (9,0) as fg color
+    DAT 0x0fff

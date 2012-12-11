@@ -72,6 +72,7 @@ def gen_palette_comment(char):
 
 
 if __name__ == "__main__":
+    offset = int(sys.argv[2])
     im = Image.open(sys.argv[1])
 
     width,height = im.size
@@ -96,7 +97,7 @@ if __name__ == "__main__":
 
     print ":monitorFont"
     for (i, char) in enumerate(unique_chars):
-        print "    ; Font Char %s" % i
+        print "    ; Font Char %s" % (i + offset)
         print "    ; Used..."
         for (x,y) in unique_chars[char]:
             print "        ; at (%s,%s)" % (x,y)
