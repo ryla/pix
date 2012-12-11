@@ -31,10 +31,6 @@ SET PC, POP
 :currentScore            
     DAT 0x0000          ; Users current score
 
-:
-
-
-
 
 ; Get clock value from start screen to make random generatior
 ; As random as possible
