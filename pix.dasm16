@@ -16,9 +16,7 @@
     IFE C, 1 			 ; If spacebar has been pressed
     ; Insert code for starting the game here
     JSR setRandomSeed	 ; Pass clockvalue to random seed
-    
-    ;;IFN C, 1
-    
+     
     
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
@@ -32,6 +30,8 @@ SET PC, POP
 
 :currentScore            
     DAT 0x0000          ; Users current score
+
+:
 
 
 
@@ -169,3 +169,10 @@ SET PC, POP			; Return from subroutin
 :monitorVRAM
     DAT 0               ; Monitor VRAM follows this, anything in the next
                         ; 384 words will be displayed on the monitor
+
+:numbers
+    DAT 0x0106
+    DAT 0x0101
+    DAT 0x0103
+    DAT 0x0104
+    ;DAT 0x0102
