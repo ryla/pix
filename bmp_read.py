@@ -6,6 +6,10 @@ and returns unique font characters and colors for the color palette
 import sys
 from PIL import Image
 
+def make_len_2(hex_thing):
+    hex_thing = hex_thing[2:]
+    return '0x%s%s' % ('0'*(2 - len(hex_thing)), hex_thing)
+
 def make_len_4(hex_thing):
     hex_thing = hex_thing[2:]
     return '0x%s%s' % ('0'*(4 - len(hex_thing)), hex_thing)
@@ -109,8 +113,40 @@ if __name__ == "__main__":
         print "    ; Used..."
         for (col_type,xy) in color_palette[color]:
             if col_type == 0:
-                col_type = 'fg'
-            else:
                 col_type = 'bg'
+            else:
+                col_type = 'fg'
             print "        ; at (%s,%s) as %s color" % (xy[0], xy[1], col_type)
         print "    DAT %s" % color
+
+    # Animation for walking
+    frame_width = 3
+    frame_height = 2
+    frame_count = 3
+    curr_block = [0,0]
+    curr_index = 0
+    anim_title = "walking"
+    all_chars = enumerate(unique_chars)
+    for x in range(frame_width):
+        for y in range(frame_height):
+            print ":"+anim_title+"_"+str(curr_index) + " ; ("+str(x)+", "+str(y)+")"
+            for frame_i in range(frame_count):
+                fg_col = "0"
+                bg_col = "0"
+                font_char = "00"
+                curr_x,curr_y = (x+(frame_i*frame_width),y)
+                for i,color in enumerate(color_palette):
+                    for (col_type,xy) in color_palette[color]:
+                        if (xy[0], xy[1]) == (curr_x,curr_y):
+                            if col_type == 0:
+                                #bg
+                                bg_col = hex(i)[2:]
+                            else:
+                                fg_col = hex(i)[2:]
+                for (i, char) in enumerate(unique_chars):
+                    for xy in unique_chars[char]:
+                        if (xy[0], xy[1]) == (curr_x,curr_y):
+                            font_char = make_len_2(hex(i))[2:]
+                print "DAT 0x"+fg_col+bg_col+font_char
+            curr_index += 1
+
