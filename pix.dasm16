@@ -1,143 +1,127 @@
-    JSR detectHW        ; Find the addresses of HW we care about
+     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
-
-:startGame
     JSR setupClock      ; Set up the clock to tick at 1/60s
     JSR splashScreen    ; Display splash screen and wait for spacebar
     JSR setRandomSeed   ; Set the random seed from the clock
     JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
-
+ 
 :infiniteStall
     SET PC, infiniteStall
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
- 
+
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
     SUB [blockPosition], 1
                         ; Increment position by 1
     IFU [blockPosition], 0
     SET [blockPosition], 131
- 
+
     SET A, 2
     SET B, " "
     HWI [keyboardHWaddr]
-       
+        
     IFE I, 20           ; When air time has reached maximum,
     SET C, 0            ; Set keyboard to off
-       
+        
     SET X, [blockPosition]
     SET Y, [blockPosition]
     SHR X, 2
     AND Y, 3
     ADD X, 0x807F
- 
+
     ADD J, 1            ; Increment frame counter (J) per cycle
     MOD J, 20           ; Limit J to be less than 10 to run every 1/6 second
-   
+    
     IFE J, 0            ; Increment which frame number
-    ADD Z, 1            
+    ADD Z, 1             
     MOD Z, 3            ; Mod for 3 frames of animation
-   
+    
+    
+ 
     IFC X, 0x7f60
     SET [X], [parapetLeft+Y]
-                        ; Display on one row down
+                        ; Display on one row down 
     ADD X,1
     IFC X, 0x7f60
-    SET [X], [parapetLeftMiddle+Y]
+    SET [X], [parapetLeftMiddle+Y] 
                         ; Display on 0ith frame defined by literal
+                        
+     ADD X,1
+    IFC X, 0x7f60
+    SET [X], [parapetMiddle+Y] 
+                        ; Display on 0ith frame defined by literal
+   
                        
-    ADD X,1
+     ADD X,1
     IFC X, 0x7f60
-    SET [X], [parapetMiddle+Y]
+    SET [X], [parapetRightMiddle+Y] 
                         ; Display on 0ith frame defined by literal
-  
+   
     ADD X,1
     IFC X, 0x7f60
-    SET [X], [parapetRightMiddle+Y]
-                        ; Display on 0ith frame defined by literal
-  
-    ADD X,1
-    IFC X, 0x7f60
-    SET [X], [parapetRight+Y]
- 
-    ADD X,1
-    IFC X, 0x7f60
-    SET [X], [gap+Y]
+    SET [X], [parapetRight+Y] 
+
     
 ; Running
     IFN C, 1
-    SET I, 0   
+    SET I, 0    
     JSR running
- 
-; Jumping   
+
+; Jumping    
     IFE C, 1
     IFL I, 10
     JSR jumping
- 
+
+
+
     JSR calcScore
- 
+
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
-; Stops clock interrupts, empty the VRAM, go back to the splash screen
-:restartGame
-    SET A, 2            ; Put clock into set interrupt mode
-    SET B, 0            ; Turn off interrupts
-    HWI [clockHWaddr]   ; Send interrupt to clock
-
-    SET I, 0            ; Start counting from 0
-:restartGameLoop
-    SET [0x8000+I], 0   ; Write zeros into VRAM
-    ADD I, 1            ; Increment I
-    IFL I, 384          ; Loop if I less than 384
-    SET PC, restartGameLoop
-
-    SET SP, 0           ; Nuke the stack
-    SET PC, startGame   ; Go back to the start of the game
- 
 ; Use the clock to calculate the users score
 :calcScore
     set A, 1            ; Store ticks elapsed since clock reset in C
     HWI [clockHWaddr]   ; Send interrupt to clock
     DIV C, 5
-    SET [currentScore], C
+    SET [currentScore], C 
                         ; Set the current score to the clock value
     JSR displayScore    ; Display the calculated digits
     SET PC, POP         ; Return from subroutine
- 
+
 ; Display the players current score
 :displayScore
-    SET X, 0x801f       ; Score display fist digit location
-    SET B, 1            ; Digit to display
+    SET X, 0x801f        	; Score display fist digit location
+    SET B, 1				; Digit to display
 :displayScoreLoop
-    SET Y, 0x042e       ; Initialize digits to zero
-   
-    SET C, [currentScore] ; Set C to the players Current Score
-    DIV C, B            ; Divide by B to "shift" C into the right cut off position
-    MOD C, 10           ; Mod by 10 to "cut off" the desired digit
-    ADD Y, C            ; Add the score digit value to the display value
-    SET [X], Y          ; Set X to the display digit
-    SUB X, 1            ; Move over by one space
-    MUL B, 10           ; Move to next digit that needs to be displayed
-    IFG X, 0x8019       ; If we are not at the last display location
+    SET Y, 0x042e			; Initialize digits to zero
+    
+    SET C, [currentScore]	; Set C to the players Current Score
+    DIV C, B				; Divide by B to "shift" C into the right cut off position
+    MOD C, 10				; Mod by 10 to "cut off" the desired digit
+    ADD Y, C				; Add the score dgit value to the display value
+    SET [X], Y				; Set X to the display digit
+    SUB X, 1				; Move over by one space
+    MUL B, 10				; Move to next digit that needs to be displayed
+    IFG X, 0x8019			; If we are not at the last display location
     SET PC, displayScoreLoop ; Loop back to top
     SET PC, POP         ; Return from subroutine
-   
-:currentScore           
+    
+:currentScore            
     DAT 0x0000          ; Player's current score
- 
+
 ; Get clock value from start screen to make random generatior
 ; As random as possible
-:setRandomSeed       
-    SET A, 1            ; Store number of ticks elapsed since last
+:setRandomSeed        
+    SET A, 1            ; Store number of ticks elapsed since last 
                         ; call to 0 in C register
     HWI [clockHWaddr]   ; Send interrupt to clock
     SET [randomSeed], C ; Save clock value to randomSeed
     SET PC, POP         ; Return from subroutine
- 
+
 ; Random number generator
-; code from lowey2002
+; code from lowey2002 
 ; http://www.0x10cforum.com/forum/m/4932880/viewthread/2732760-pseudorandom-generator
 :random
     SET X, [randomSeed] ; Set x to random seed
@@ -148,46 +132,46 @@
     SET I, [randomMax]
     SUB I, [randomMin]  ; Calc difference between bounds
     MOD X, I            ; Reduces to difference between bounds
-    ADD X, [randomMin]  ; Increases to make sure x is above lower bound 
+    ADD X, [randomMin]  ; Increases to make sure x is above lower bound  
     SET PC, POP         ; Return from subroutin
- 
-:randomMin           
+
+:randomMin            
     DAT 0x0000          ; Lower bound for random number
- 
+
 :randomMax
-    DAT 0x0064          ; Upper bound for random number   
- 
-:randomSeed             
+    DAT 0x0064          ; Upper bound for random number    
+
+:randomSeed              
     DAT 0x3e42          ; Seed for random number
-:blockPosition                       
-    DAT 0x0000             
+:blockPosition                        
+    DAT 0x0000              
                         
 :running
     SET [0x8045], [0x1100]
     SET [0x8026], [0x2200]
     SET [0x8047], [0x3300]
- 
+
     SET [0x8046], [thiefHead+Z]
-                        ; Display on 0th frame defined by literal
+                        ; Display on 0th frame defined by literal 
     SET [0x8065], [leftBody+Z]
-                        ; Display on one row down
+                        ; Display on one row down 
     SET [0x8066], [rightBody+Z]
     SET [0x8067], [pixel+Z]
     SET PC, POP
- 
+
 :jumping
-    SET [0x8065], [0x1100] 
-    SET [0x8066], [0x1100]
-    SET [0x8067], [0x1100]
- 
+    SET [0x8065], [0x1100]  
+    SET [0x8066], [0x1100] 
+    SET [0x8067], [0x1100] 
+
     ADD I,1
     SET [0x8026], [thiefHead+Z]
     SET [0x8045], [leftBody+Z]
-                        ; Display on one row down
+                        ; Display on one row down 
     SET [0x8046], [rightBody+Z]
     SET [0x8047], [pixel+Z]
     SET PC, POP
- 
+
 ; Display splash screen until spacebar pressed
 :splashScreen
     SET A, 2
@@ -197,14 +181,14 @@
     IFE C, 0
     SET PC, POP
     SET PC, splashScreenLoop
-   
+    
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
-    SET B, 50           ; Set clock frequency to 1/60s
+    SET B, 50            ; Set clock frequency to 1/60s
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
- 
+
 ; Setup mainLoop to be triggered once every clock tick
 :setupMainLoop
     IAS mainLoop        ; Set up mainLoop as the interrupt handler
@@ -212,14 +196,14 @@
     SET B, 1            ; Set clock interrupt message to 1
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
- 
+
 ; Configures the monitor and the VRAM for the monitor. Note: time consuming
 :setupMonitor
     SET A, 0            ; Put monitor into set VRAM mode
-    SET B, 0x8000       ; Set the start of the monitor's VRAM mapping
+    SET B, 0x8000  ; Set the start of the monitor's VRAM mapping
     HWI [monitorHWaddr] ; Send settings to monitor. The monitor will still
                         ; respond to interrupts while it's powering on
-   SET A, 1             ; Put monitor into set font mode
+    SET A, 1            ; Put monitor into set font mode
     SET B, monitorFont  ; Set the start of the monitor's font map
     HWI [monitorHWaddr] ; Send settings to monitor
     SET A, 2            ; Put the monitor into set palette mode
@@ -227,7 +211,7 @@
                         ; Set the start of the monitor's font map
     HWI [monitorHWaddr] ; Send settings to monitor
     SET PC, POP         ; Return from subroutine
- 
+
 ; Scans attached hardware and populates the (device)HWaddr memory locations
 ; with the address of each recognized attached device.
 :detectHW
@@ -260,7 +244,7 @@
     SET PC, detectHWaddrLoop
                         ; Conditionally jump to start of addrLoop
     SET PC, POP         ; Return from subroutine
- 
+
 ; Hardware IDs and addresses. Use detectHW to populate addresses
 :detectHWdataLo
     DAT 0xb402          ; Low word of Generic Clock ID
@@ -274,7 +258,7 @@
     DAT 0xf615, 0x7349  ; LEM1802 Monitor ID
 :monitorHWaddr
     DAT 0xffff          ; To be filled with HW address of monitor
- 
+
 ; Definitions for the monitor's color palette
 :monitorPalette
     ; Color 0 (black)
@@ -287,7 +271,7 @@
     DAT 0x0ccc
     ; Color 4 (number white)
     DAT 0x0fff
- 
+
 :monitorFont
 ;THIEF
     ; Font Char 0
@@ -348,7 +332,7 @@
         DAT 0x3fc5, 0x0808
     ; Font Char 28
         DAT 0x4040, 0x8000
- 
+
   ;BUILDING
     ; Font Char 29
         DAT 0x0000, 0x6202
@@ -384,7 +368,7 @@
         DAT 0xffff, 0x0000
     ; Font Char 45
         DAT 0xf8ff, 0xffff
- 
+
     ;NUMBERS
     ; Font Char 46
         DAT 0x837d, 0x83ff ; 0
@@ -406,10 +390,10 @@
         DAT 0x936d, 0x93ff ; 8
     ; Font Char 55
         DAT 0xb36d, 0x83ff ; 9
- 
+
     ;other turret that we forgot
- 
-; Font Char 56
+
+ ; Font Char 56
 DAT 0x0262, 0x0000
 ; Font Char 57
 DAT 0xffff, 0xffff
@@ -421,95 +405,95 @@ DAT 0x6262, 0x0000
 DAT 0x0000, 0x0007
 ; Font Char 61
 DAT 0x0000, 0xffff
- 
+
+
+
+
+
 :blockLeft
     DAT 0x0106
     DAT 0x0101
     DAT 0x0103
     DAT 0x0104
     ;DAT 0x0102
-   
+    
 :blockRight
     DAT 0x002a
     DAT 0x332a
     DAT 0x332a
     DAT 0x332a
     ;DAT 0x0106
-   
+    
 :buildingSolidMiddle
     DAT 0x332a
     DAT 0x332a
     DAT 0x332a
     DAT 0x332a
     ;DAT 0x0106
-   
+    
     
 :thiefHead ; (1,0)
     DAT 0x2000 ; 0
     DAT 0x201c ; 1
     DAT 0x2000 ; 2
-   
+    
 :leftBody ; (0,1)
     DAT 0x200a ; 0
     DAT 0x2002 ; 1
     DAT 0x201a ; 2
-   
+    
 :rightBody ; (1,1)
     DAT 0x2003 ; 0
     DAT 0x201b ; 1
     DAT 0x200b ; 2
-   
+    
 :pixel ; (2,1)
     DAT 0x1016 ; 0
     DAT 0x1019 ; 1
     DAT 0x1019 ; 2
- 
+
 :buildingSolidLeft ; (0, 1)
 DAT 0x332A
 DAT 0x0325 ; (0, 1) fg#1 bg#0 C#37
 DAT 0x032c ; (3, 1) fg#1 bg#0 C#44
 DAT 0x0324 ; (7, 1) fg#0 bg#1 C#34
 DAT 0x0020 ; (10, 1) fg#0 bg#0 C#42
- 
+
 :buildingSolidRight ; (0, 1)
 DAT 0x002A
 DAT 0x3025 ; (0, 1) fg#1 bg#0 C#37
 DAT 0x302c ; (3, 1) fg#1 bg#0 C#44
 DAT 0x3024 ; (7, 1) fg#0 bg#1 C#34
 DAT 0x3320 ; (10, 1) fg#0 bg#0 C#42
- 
-:parapetLeft
-    DAT 0x301F ; (0, 0) fg#1 bg#0 C#31
-    DAT 0x0321 ; (3, 0) fg#1 bg#0 C#33
-    DAT 0x0328 ; (7, 0) fg#0 bg#1 C#40
-    DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
-    ;DAT 0x3027 ;(1,0) C#60
-   
-:parapetMiddle
-    DAT 0x0323 ;(1,0) C#35
-    DAT 0x032b ;(1,0) C#35
-    DAT 0x031e ;(1,0) C#35
-    DAT 0x013b ;(1,0) C#35
- 
- 
-:parapetRight
-    ;DAT 0x002A ;blank
-    DAT 0x032d
-    DAT 0x0327
-    DAT 0x033a ; (3, 0) fg#1 bg#0 C#60
-    DAT 0x0326
- 
+
+:parapetLeft	;correct
+	DAT 0x301F ; (0, 0) fg#1 bg#0 C#31
+	DAT 0x0321 ; (3, 0) fg#1 bg#0 C#33
+	DAT 0x0328 ; (7, 0) fg#0 bg#1 C#40
+	DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
+	;DAT 0x3027 ;(1,0) C#60
+    
 :parapetLeftMiddle
-    DAT 0x0123 ;(1,0) C#35
-    DAT 0x012b ;(1,0) C#35
-    DAT 0x011e ;(1,0) C#35
-    DAT 0x0138 ;(1,0) C#35
-   
-:parapetRightMiddle
-    DAT 0x021d ;(1,0) C#35
-    DAT 0x022b ;(1,0) C#35
-    DAT 0x021e ;(1,0) C#35
-    DAT 0x023b ;(1,0) C#35
- 
-:gap
-    DAT 0x002A ;blank
+	DAT 0x0323 ;(1,0) C#35
+	DAT 0x032b ;(1,0) C#35
+    DAT 0x031e ;(1,0) C#35
+    DAT 0x0338 ;(1,0) C#35
+    
+:parapetMiddle
+	DAT 0x0323 ;(1,0) C#
+	DAT 0x032b ;(1,0) C#
+    DAT 0x031e ;(1,0) C#
+    DAT 0x033b ;(1,0) C#
+
+:parapetRightMiddle		;correct
+	DAT 0x0326 ;C#38
+    DAT 0x031d ;(1,0) C#29
+	DAT 0x031e ;(1,0) C#30
+    DAT 0x033b ;(1,0) C#59
+
+:parapetRight
+	DAT 0x002A ;blank
+    DAT 0x032d ;C#45
+    DAT 0x0327 ; (3, 0) fg#1 bg#0 C#39
+	DAT 0x033a ;C#58
+
