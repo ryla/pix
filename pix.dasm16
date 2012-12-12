@@ -4,6 +4,7 @@
     JSR splashScreen    ; Display splash screen and wait for spacebar
     JSR setRandomSeed   ; Set the random seed from the clock
     JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
+
 :infiniteStall
     SET PC, infiniteStall
                         ; Hang here, if everything is golden, we're waiting
@@ -36,8 +37,6 @@
     ADD Z, 1            
     MOD Z, 3            ; Mod for 3 frames of animation
    
-    
- 
     IFC X, 0x7f60
     SET [X], [parapetLeft+Y]
                         ; Display on one row down
@@ -75,8 +74,6 @@
     IFL I, 10
     JSR jumping
  
- 
- 
     JSR calcScore
  
     RFI 0               ; Since mainLoop is technically an interrupt
@@ -94,19 +91,19 @@
  
 ; Display the players current score
 :displayScore
-    SET X, 0x801f                                  ; Score display fist digit location
-    SET B, 1                                                             ; Digit to display
+    SET X, 0x801f       ; Score display fist digit location
+    SET B, 1            ; Digit to display
 :displayScoreLoop
-    SET Y, 0x042e                                 ; Initialize digits to zero
+    SET Y, 0x042e       ; Initialize digits to zero
    
     SET C, [currentScore] ; Set C to the players Current Score
-    DIV C, B                                                            ; Divide by B to "shift" C into the right cut off position
-    MOD C, 10                                                       ; Mod by 10 to "cut off" the desired digit
-    ADD Y, C                                                           ; Add the score dgit value to the display value
-    SET [X], Y                                                         ; Set X to the display digit
-    SUB X, 1                                                           ; Move over by one space
-    MUL B, 10                                                        ; Move to next digit that needs to be displayed
-    IFG X, 0x8019                                 ; If we are not at the last display location
+    DIV C, B            ; Divide by B to "shift" C into the right cut off position
+    MOD C, 10           ; Mod by 10 to "cut off" the desired digit
+    ADD Y, C            ; Add the score digit value to the display value
+    SET [X], Y          ; Set X to the display digit
+    SUB X, 1            ; Move over by one space
+    MUL B, 10           ; Move to next digit that needs to be displayed
+    IFG X, 0x8019       ; If we are not at the last display location
     SET PC, displayScoreLoop ; Loop back to top
     SET PC, POP         ; Return from subroutine
    
@@ -187,7 +184,7 @@
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
-    SET B, 50            ; Set clock frequency to 1/60s
+    SET B, 50           ; Set clock frequency to 1/60s
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
  
@@ -202,10 +199,10 @@
 ; Configures the monitor and the VRAM for the monitor. Note: time consuming
 :setupMonitor
     SET A, 0            ; Put monitor into set VRAM mode
-    SET B, 0x8000  ; Set the start of the monitor's VRAM mapping
+    SET B, 0x8000       ; Set the start of the monitor's VRAM mapping
     HWI [monitorHWaddr] ; Send settings to monitor. The monitor will still
                         ; respond to interrupts while it's powering on
-   SET A, 1            ; Put monitor into set font mode
+   SET A, 1             ; Put monitor into set font mode
     SET B, monitorFont  ; Set the start of the monitor's font map
     HWI [monitorHWaddr] ; Send settings to monitor
     SET A, 2            ; Put the monitor into set palette mode
