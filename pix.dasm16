@@ -479,37 +479,37 @@ DAT 0x3024 ; (7, 1) fg#0 bg#1 C#34
 DAT 0x3320 ; (10, 1) fg#0 bg#0 C#42
  
 :parapetLeft
-                DAT 0x301F ; (0, 0) fg#1 bg#0 C#31
-                DAT 0x0321 ; (3, 0) fg#1 bg#0 C#33
-                DAT 0x0328 ; (7, 0) fg#0 bg#1 C#40
-                DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
-                ;DAT 0x3027 ;(1,0) C#60
+    DAT 0x301F ; (0, 0) fg#1 bg#0 C#31
+    DAT 0x0321 ; (3, 0) fg#1 bg#0 C#33
+    DAT 0x0328 ; (7, 0) fg#0 bg#1 C#40
+    DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
+    ;DAT 0x3027 ;(1,0) C#60
    
 :parapetMiddle
-                DAT 0x0323 ;(1,0) C#35
-                DAT 0x032b ;(1,0) C#35
+    DAT 0x0323 ;(1,0) C#35
+    DAT 0x032b ;(1,0) C#35
     DAT 0x031e ;(1,0) C#35
     DAT 0x013b ;(1,0) C#35
  
  
 :parapetRight
     ;DAT 0x002A ;blank
-                DAT 0x032d
+    DAT 0x032d
     DAT 0x0327
     DAT 0x033a ; (3, 0) fg#1 bg#0 C#60
-                DAT 0x0326
+    DAT 0x0326
  
 :parapetLeftMiddle
-                DAT 0x0123 ;(1,0) C#35
-                DAT 0x012b ;(1,0) C#35
+    DAT 0x0123 ;(1,0) C#35
+    DAT 0x012b ;(1,0) C#35
     DAT 0x011e ;(1,0) C#35
     DAT 0x0138 ;(1,0) C#35
    
 :parapetRightMiddle
-                DAT 0x021d ;(1,0) C#35
-                DAT 0x022b ;(1,0) C#35
+    DAT 0x021d ;(1,0) C#35
+    DAT 0x022b ;(1,0) C#35
     DAT 0x021e ;(1,0) C#35
     DAT 0x023b ;(1,0) C#35
  
 :gap
-                DAT 0x002A ;blank
+    DAT 0x002A ;blank
