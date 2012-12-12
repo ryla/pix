@@ -159,8 +159,33 @@
  
 :randomSeed             
     DAT 0x3e42          ; Seed for random number
+
 :blockPosition                       
-    DAT 0x0000             
+    DAT 0x0000
+
+; Feeds random number generator to get gap size, and starting point
+:GapCreator    
+    ADD [size], [startingPoint] 
+    					; Add the size and the starting point of the previous gap together
+    ADD [size], 3		; Add three to this number because we do not want gaps that are too close together
+	SET [randomMin], [size]
+						; Set the min distance to this number
+    ADD [size] , 10		; Add 10 more to get a new max
+    SET [randomMax], 10	; Set max to this number
+    JSR random			; Call random num gen for starting
+	SET [startingPoint], X
+    					; Save the new starting point
+	SET [randomMin], 1	; Min Number of gap spaces in a row
+    SET [randomMax], 5	; Max number of gap spaces in a row
+    JSR random			; Call random num generator for size
+    SET [size], X		; Save the new size
+    SET PC, POP			; Return from subroutin
+
+:startingPoint
+	DAT 0x0000			; Starting point for gap
+
+:size
+	DAT 0x0000			; Size for gap
                         
 :running
     SET [0x8045], [0x1100]
