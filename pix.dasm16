@@ -142,11 +142,12 @@
 :GapCreator    
     ADD [size], [startingPoint] 
                         ; Add the size and the starting point of the previous gap together
-    ADD [size], 3       ; Add three to this number because we do not want gaps that are too close together
+    ADD [size], 5       ; Add three to this number because we do not want gaps that are too close together
     SET [randomMin], [size]
                         ; Set the min distance to this number
-    ADD [size] , 10     ; Add 10 more to get a new max
-    SET [randomMax], 10 ; Set max to this number
+    ADD [size] , 40     ; Add 10 more to get a new max
+    SET [randomMax], [size]
+                        ; Set max to this number
     JSR random          ; Call random num gen for starting
     SET [startingPoint], X
                         ; Save the new starting point
