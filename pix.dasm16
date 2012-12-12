@@ -1,10 +1,11 @@
     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock to tick at 1/60s
+    JSR fillScrollBuffer ; Fill the scroll buffer for the start of the game
     JSR splashScreen    ; Display splash screen and wait for spacebar
     JSR setRandomSeed   ; Set the random seed from the clock
     JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
- 
+
 :infiniteStall
     SET PC, infiniteStall
                         ; Hang here, if everything is golden, we're waiting
@@ -12,11 +13,6 @@
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
-    SUB [blockPosition], 1
-                        ; Increment position by 1
-    IFU [blockPosition], 0
-    SET [blockPosition], 131
-
     SET A, 2
     SET B, " "
     HWI [keyboardHWaddr]
@@ -24,40 +20,15 @@
     IFE I, 20           ; When air time has reached maximum,
     SET C, 0            ; Set keyboard to off
         
-    SET X, [blockPosition]
-    SET Y, [blockPosition]
-    SHR X, 2
-    AND Y, 3
-    ADD X, 0x807F
-
     ADD J, 1            ; Increment frame counter (J) per cycle
     MOD J, 20           ; Limit J to be less than 10 to run every 1/6 second
     
     IFE J, 0            ; Increment which frame number
     ADD Z, 1             
     MOD Z, 3            ; Mod for 3 frames of animation
- 
-    IFC X, 0x7f60
-    SET [X], [parapetLeft+Y]
-                        ; Display on one row down 
-    ADD X,1
-    IFC X, 0x7f60
-    SET [X], [parapetLeftMiddle+Y] 
-                        ; Display on 0ith frame defined by literal
-                        
-     ADD X,1
-    IFC X, 0x7f60
-    SET [X], [parapetMiddle+Y] 
-                        ; Display on 0ith frame defined by literal
-                       
-     ADD X,1
-    IFC X, 0x7f60
-    SET [X], [parapetRightMiddle+Y] 
-                        ; Display on 0ith frame defined by literal
-   
-    ADD X,1
-    IFC X, 0x7f60
-    SET [X], [parapetRight+Y] 
+
+; Scrolling
+    JSR scroll
     
 ; Running
     IFN C, 1
@@ -73,6 +44,40 @@
 
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
+
+; Initialize the scroll buffer (at 0x8200) with addresses of tile indices
+:fillScrollBuffer
+    SET I, 0            ; Start counting from zero
+:fillScrollBufferLoop
+    SET [0x8200+I], parapetMiddle
+                        ; Draw parapets on top row
+    SET [0x8220+I], buildingSolidMiddle
+                        ; Draw buildings on bottom row
+    ADD I, 1            ; Increment I
+    IFL I, 32           ; Loop if I less than 32
+    SET PC, fillScrollBufferLoop
+    SET PC, POP         ; Return from subroutine
+
+
+; Animate everything in the scroll buffer
+:scroll
+    SET X, 0            ; Set X to 0, I and J are weirdly in use
+    ADD [scrollPosition], 1
+                        ; Increment the animation index
+    MOD [scrollPosition], 4
+                        ; Mod animation index for 4 frames of animation
+:scrollLoop
+    SET Y, [0x8200+X]   ; Store the base address of the frame in Y
+    ADD Y, [scrollPosition]
+                        ; Add current animation index to Y
+    SET [0x8080+X], [Y] ; Look up VRAM word and write it to VRAM
+    ADD X, 1            ; Increment X
+    IFL X, 64           ; Loop while X is less than 64
+    SET PC, scrollLoop  
+    SET PC, POP         ; Return from subroutine
+
+:scrollPosition
+    DAT 0
 
 ; Use the clock to calculate the users score
 :calcScore
@@ -163,9 +168,6 @@
 :size
     DAT 0x0000          ; Size for gap
 
-:blockPosition                        
-    DAT 0x0000              
-                        
 :running
     SET [0x8045], [0x1100]
     SET [0x8026], [0x2200]
@@ -424,14 +426,12 @@
 ; Font Char 60
     DAT 0x0000, 0x0007
 ; Font Char 61
-DAT 0x0000, 0xffff
+    DAT 0x0000, 0xffff
 
 ;Missing PIX
 
 ;Font Char 62
-DAT 0x0400, 0x0000
-
-
+    DAT 0x0400, 0x0000
 
 :blockLeft
     DAT 0x0106
@@ -473,7 +473,6 @@ DAT 0x0400, 0x0000
     DAT 0x1016 ; 0
     DAT 0x103e ; 1
     DAT 0x1016 ; 2
-
 
 :buildingSolidLeft ; (0, 1)
     DAT 0x332A
@@ -519,3 +518,4 @@ DAT 0x0400, 0x0000
     DAT 0x032d ;C#45
     DAT 0x0327 ; (3, 0) fg#1 bg#0 C#39
     DAT 0x033a ;C#58
+
