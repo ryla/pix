@@ -1,5 +1,7 @@
     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
+
+:startGame
     JSR setupClock      ; Set up the clock to tick at 1/60s
     JSR splashScreen    ; Display splash screen and wait for spacebar
     JSR setRandomSeed   ; Set the random seed from the clock
@@ -45,13 +47,12 @@
     SET [X], [parapetLeftMiddle+Y]
                         ; Display on 0ith frame defined by literal
                        
-     ADD X,1
+    ADD X,1
     IFC X, 0x7f60
     SET [X], [parapetMiddle+Y]
                         ; Display on 0ith frame defined by literal
   
-                       
-     ADD X,1
+    ADD X,1
     IFC X, 0x7f60
     SET [X], [parapetRightMiddle+Y]
                         ; Display on 0ith frame defined by literal
@@ -78,6 +79,22 @@
  
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
+
+; Stops clock interrupts, empty the VRAM, go back to the splash screen
+:restartGame
+    SET A, 2            ; Put clock into set interrupt mode
+    SET B, 0            ; Turn off interrupts
+    HWI [clockHWaddr]   ; Send interrupt to clock
+
+    SET I, 0            ; Start counting from 0
+:restartGameLoop
+    SET [0x8000+I], 0   ; Write zeros into VRAM
+    ADD I, 1            ; Increment I
+    IFL I, 384          ; Loop if I less than 384
+    SET PC, restartGameLoop
+
+    SET SP, 0           ; Nuke the stack
+    SET PC, startGame   ; Go back to the start of the game
  
 ; Use the clock to calculate the users score
 :calcScore
@@ -404,10 +421,6 @@ DAT 0x6262, 0x0000
 DAT 0x0000, 0x0007
 ; Font Char 61
 DAT 0x0000, 0xffff
- 
- 
- 
- 
  
 :blockLeft
     DAT 0x0106
