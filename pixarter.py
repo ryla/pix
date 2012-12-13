@@ -87,15 +87,18 @@ class ImageMap:
         print
         print
         print
+        x_offset = 0
+        y_offset = 0
+
         for x in range(32):
             for y in range(12):
-                char = self.chars.loc_to_words[(x,y)]
+                char = self.chars.loc_to_words[(x+x_offset,y+y_offset)]
                 char_idx = hex(self.chars.unique_words.index(char)+char_offset)[2:]
 
                 if len(char_idx) == 1:
                     char_idx = "0"+char_idx
 
-                bg_col, fg_col = self.chars.loc_to_color_idx[(x,y)]
+                bg_col, fg_col = self.chars.loc_to_color_idx[(x+x_offset,y+y_offset)]
 
                 assembly_loc = x+32*y
                 assembly_loc = make_len_3(hex(assembly_loc))[2:]
@@ -103,7 +106,7 @@ class ImageMap:
                 #print "MAD"+str(act_y)
                 #print hex(act_y)[2:]
                 if char != ('0xffff','0xffff'):
-                    print "SET [0x8%s], 0x%s%s%s ; %s Loc %s=0x%s; char_idx: %s=0x%s" % (assembly_loc, bg_col, fg_col, char_idx, (x,y), x+32*y, assembly_loc, self.chars.unique_words.index(char)+char_offset, char_idx)
+                    print "SET [0x8%s], 0x%s%s%s ; %s Loc %s=0x%s; char_idx: %s=0x%s" % (assembly_loc, bg_col, fg_col, char_idx, (x+x_offset,y+y_offset), x+32*y, assembly_loc, self.chars.unique_words.index(char)+char_offset, char_idx)
 
     def get_anim(self, char_offset=0):
 
@@ -113,10 +116,10 @@ class ImageMap:
         frame_height = 2
 
         frame_count_x = 3
-        frame_count_y = 1
+        frame_count_y = 1 # It Just Don' work ATM
 
         x_offset = 18
-        y_offset = 0
+        y_offset = 0 # Maybe doesn't work?
 
         anim_name = "jumpingPixel"
 
@@ -251,7 +254,7 @@ def parse_image(image, offset = 0):
             0: (0x0000, BG), # Black
             1: (0x0e33, FG), # Red
             2: (0x0777, FG), # Person gray
-            3: (0x0ccc, FG), # Building gray
+            3: (0x0ddd, FG), # Building gray
             4: (0x0fff, FG), # White
         })
 
