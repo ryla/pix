@@ -1,15 +1,22 @@
-    JSR detectHW           ; Find the addresses of HW we care about
+    JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
+:newGame                ; Stuff that needs to happen to make a new game
     JSR setupClock      ; Set up the clock to tick at 1/60s
     JSR fillScrollBuffer ; Fill the scroll buffer for the start of the game
+    JSR setupBlockGenerator ; Setup the block generator
     JSR splashScreen    ; Display splash screen and wait for spacebar
     JSR setRandomSeed   ; Set the random seed from the clock
-    JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
+    JSR startMainLoop   ; Configure mainLoop to be triggered every 1/60s
 
-:infiniteStall
-    SET PC, infiniteStall
+:runGame
+    IFN [gameOver], 1     ; Loop if the game's not over.
+    SET PC, runGame
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
+
+    JSR stopMainLoop    ; Stop clock interrupts
+    SET [gameOver], 0   ; New game isn't over!
+    SET PC, newGame     ; Make a new game
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
@@ -55,7 +62,7 @@
     IFE [theifJumpState], 0
     IFE [0x8206], gapMiddle
     IFE [0x8205], gapMiddle
-    SET PC, gameOver
+    SET [gameOver], 1
 
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
@@ -69,13 +76,8 @@
 :mainLoopCounter
     DAT 0
 
-; End game and stop sending clock interrupts
 :gameOver
-    SET A, 2            ; Put clock into set interrupt mode
-    SET B, 0            ; Set clock interrupt message to 1 (off)
-    HWI [clockHWaddr]   ; Send settings to the clock
-    SET SP, 0           ; Clear the stack
-    SET PC, infiniteStall
+    DAT 0
 
 ; Initialize the scroll buffer (at 0x8200) with addresses of tile indices
 :fillScrollBuffer
@@ -191,19 +193,25 @@
 :randomSeed              
     DAT 0x3e42          ; Seed for random number
 
+; Set up blockGenerator
+:setupBlockGenerator
+    SET [blockGeneratorIndex], 0
+                        ; Reset generator index to 0
+    SET PC, POP         ; Return from subroutine
+
 ; Feeds random number generator to get gap size, and starting point
 :blockGenerator 
     SET A, [blockGeneratorIndex]
-    SET [0x821f], [parapetLuts + A]
+    SET [0x821f], [parapetLUTs+A]
                         ; pick the Ath Lut
-    SET [0x823f], [buildingLuts + A]
+    SET [0x823f], [buildingLUTs+A]
                         ; pick the Ath Lut
 
     
-	IFE [blockGeneratorIndex], 2
+    IFE [blockGeneratorIndex], 2
     SET PC, blockGeneratorWait
     
-	IFE [blockGeneratorIndex], 5
+    IFE [blockGeneratorIndex], 5
     SET PC, blockGeneratorWait
     
 :blockGeneratorAdd
@@ -225,7 +233,7 @@
     SET [blockGeneratorCounter] , X
     SET PC, blockGeneratorAdd
 
-:parapetLuts    ; Lut of parapet Luts
+:parapetLUTs    ; Lut of parapet Luts
     DAT parapetRightMiddle
     DAT parapetRight
     DAT gapMiddle
@@ -233,7 +241,7 @@
     DAT parapetLeftMiddle
     DAT parapetMiddle
     
-:buildingLuts   ; Lut of building Luts
+:buildingLUTs   ; Lut of building Luts
     DAT buildingSolidMiddle
     DAT buildingSolidRight
     DAT gapMiddle
@@ -242,8 +250,7 @@
     DAT buildingSolidMiddle
 
 :blockGeneratorCounter
-	DAT 0x0005 			; when in state 1 or 4 get num from random gen 
-
+    DAT 0x0005          ; when in state 1 or 4 get num from random gen 
 
 :blockGeneratorIndex
     DAT 0x0000          ; Which animation block we are at
@@ -289,6 +296,7 @@
 
 ; Display splash screen until spacebar pressed
 :splashScreen
+    JSR clearScreen     ; Clear screen to prep for splash
     SET [0x80e4], 0x0440 ; (4, 7) Loc 228=0x0e4; char_idx: 64=0x40
     SET [0x8104], 0x0441 ; (4, 8) Loc 260=0x104; char_idx: 65=0x41
     SET [0x80e5], 0x0442 ; (5, 7) Loc 229=0x0e5; char_idx: 66=0x42
@@ -349,12 +357,18 @@
     SET [0x811a], 0x046c ; (26, 8) Loc 282=0x11a; char_idx: 108=0x6c
     SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
 
+:splashScreenDownLoop   ; Loop while space is down
+    JSR keyboardRead
+    IFE [keyboardState], 1
+    SET PC, splashScreenDownLoop
+
+:splashScreenUpLoop     ; Loop while space is up
     JSR keyboardRead
     IFE [keyboardState], 0
+    SET PC, splashScreenUpLoop
+
     JSR clearScreen
-    IFE [keyboardState], 0
     SET PC, POP
-    SET PC, splashScreen
 
 ; Put a 1 in keyboardState is spacebar is down, 0 otherwise
 :keyboardRead
@@ -384,10 +398,16 @@
     SET PC, POP         ; Return from subroutine
 
 ; Setup mainLoop to be triggered once every clock tick
-:setupMainLoop
+:startMainLoop
     IAS mainLoop        ; Set up mainLoop as the interrupt handler
     SET A, 2            ; Put clock into set interrupt mode
     SET B, 1            ; Set clock interrupt message to 1
+    HWI [clockHWaddr]   ; Send settings to the clock
+    SET PC, POP         ; Return from subroutine
+
+:stopMainLoop
+    SET A, 2            ; Put clock into set interrupt mode
+    SET B, 0            ; Turn clock interrupts off
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
