@@ -221,35 +221,44 @@
     SET A, [theifAnimIndex]
     SET [0x8045], [0x1100]
     SET [0x8026], [0x2200]
+    SET [0x8027], [0x2200]
+    SET [0x8025], [0x2200]
     SET [0x8047], [0x3300]
 
-    SET [0x8046], [thiefHead+A]
+    SET [0x8046], [walking_2+A]
                         ; Display on 0th frame defined by literal 
-    SET [0x8065], [leftBody+A]
+    SET [0x8065], [walking_1+A]
                         ; Display on one row down 
-    SET [0x8066], [rightBody+A]
-    SET [0x8067], [pixel+A]
+    SET [0x8066], [walking_3+A]
+    SET [0x8067], [pixelWalking+A]
     SET PC, POP
 
 :jumping
-    SET A, [theifAnimIndex]
+    SET A, [thiefJumpIndex]
     SET [0x8065], [0x1100]  
     SET [0x8066], [0x1100] 
     SET [0x8067], [0x1100] 
 
-    SET [0x8026], [thiefHead+A]
-    SET [0x8045], [leftBody+A]
+    SET [0x8026], [jumping_2+A]
+    SET [0x8025], [jumping_0+A]
+    SET [0x8045], [jumping_1+A]
                         ; Display on one row down 
-    SET [0x8046], [rightBody+A]
-    SET [0x8047], [pixel+A]
+    SET [0x8046], [jumping_3+A]
+    SET [0x8027], [jumpingPixel+A]
+    ;ADD [thiefJumpIndex],1
+    ;IFE [thiefJumpIndex],3
+    
     SET PC, POP
 
 :theifAnimIndex
     DAT 0
 
+:thiefJumpIndex
+    DAT 0
+
 ; Display splash screen until spacebar pressed
 :splashScreen
-	SET [0x80e4], 0x0440 ; (4, 7) Loc 228=0x0e4; char_idx: 64=0x40
+    SET [0x80e4], 0x0440 ; (4, 7) Loc 228=0x0e4; char_idx: 64=0x40
 SET [0x8104], 0x0441 ; (4, 8) Loc 260=0x104; char_idx: 65=0x41
 SET [0x80e5], 0x0442 ; (5, 7) Loc 229=0x0e5; char_idx: 66=0x42
 SET [0x8105], 0x0443 ; (5, 8) Loc 261=0x105; char_idx: 67=0x43
@@ -331,15 +340,15 @@ SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
     SET X,0x7fff 
     :clearLoop
     ADD X,1
-	SET [X],0x002a
+    SET [X],0x002a
     IFG X,0x817f
-	SET PC,POP
-	JSR clearLoop
+    SET PC,POP
+    JSR clearLoop
     
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
-    SET B, 1            ; Set clock frequency to 1/60s
+    SET B, 20            ; Set clock frequency to 1/60s
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
@@ -427,66 +436,36 @@ SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
     DAT 0x0fff
 
 :monitorFont
-;THIEF
-    ; Font Char 0
-        DAT 0xa0a0, 0x4000
-    ; Font Char 1
-        DAT 0x0000, 0x90c8
-    ; Font Char 2
-        DAT 0x0000, 0x84ea
-    ; Font Char 3
-        DAT 0x3f72, 0x8202
-    ; Font Char 4
-        DAT 0x0718, 0x2100
-    ; Font Char 5
-        DAT 0x8080, 0x0000
-    ; Font Char 6
-        DAT 0x0000, 0x88e4
-    ; Font Char 7
-        DAT 0x7eca, 0x1110
-    ; Font Char 8
-        DAT 0x0000, 0x0071
-    ; Font Char 9
-        DAT 0x0000, 0x01e2
-    ; Font Char 10
-        DAT 0x0000, 0x8c42
-    ; Font Char 11
-        DAT 0x3fca, 0x0402
-    ; Font Char 12
-        DAT 0x0000, 0x8000
-    ; Font Char 13
-        DAT 0x031c, 0x0000
-    ; Font Char 14
-        DAT 0x3fc5, 0x0810
-    ; Font Char 15
-        DAT 0xf454, 0x8840
-    ; Font Char 16
-        DAT 0x0000, 0x001c
-    ; Font Char 17
-        DAT 0xe8a8, 0x1080
-    ; Font Char 18
-        DAT 0x0000, 0x2040
-    ; Font Char 19
-        DAT 0xd050, 0x2000
-    ; Font Char 20
-        DAT 0x1fe2, 0x0402
-    ; Font Char 21
-        DAT 0x0f71, 0x0201
-    ; Font Char 22
-        DAT 0x0100, 0x0000
-    ; Font Char 23
-        DAT 0x0000, 0x4080
-    ; Font Char 24
-        DAT 0x0000, 0x2018
-    ; Font Char 25
-        DAT 0x0000, 0x0000
-    ; Font Char 26
-        DAT 0x0000, 0x00e2
-    ; Font Char 27
-        DAT 0x3fc5, 0x0808
-    ; Font Char 28
-        DAT 0x4040, 0x8000
-
+;THIEF 0-28
+  DAT 0xffff, 0xffff ; 0 = 0x0
+DAT 0xffff, 0x73bd ; 1 = 0x1
+DAT 0x5f5f, 0xbfff ; 2 = 0x2
+DAT 0xc08d, 0x7dfd ; 3 = 0x3
+DAT 0xffff, 0x7b15 ; 4 = 0x4
+DAT 0xbfbf, 0x7fff ; 5 = 0x5
+DAT 0xc03a, 0xf7f7 ; 6 = 0x6
+DAT 0xffff, 0xff1d ; 7 = 0x7
+DAT 0xc035, 0xfbfd ; 8 = 0x8
+DAT 0xffff, 0x6f37 ; 9 = 0x9
+DAT 0x7f7f, 0xffff ; 10 = 0xa
+DAT 0x8135, 0xeeef ; 11 = 0xb
+DAT 0xffff, 0x771b ; 12 = 0xc
+DAT 0xc03a, 0xf7ef ; 13 = 0xd
+DAT 0xffff, 0xfe1d ; 14 = 0xe
+DAT 0xe01d, 0xfbfd ; 15 = 0xf
+DAT 0xffff, 0x7fff ; 16 = 0x10
+DAT 0xffff, 0xff8e ; 17 = 0x11
+DAT 0x2faf, 0xdfff ; 18 = 0x12
+DAT 0xf08e, 0xfdfe ; 19 = 0x13
+DAT 0xffff, 0xbf7f ; 20 = 0x14
+DAT 0xffff, 0xdfe7 ; 21 = 0x15
+DAT 0x1757, 0xef7f ; 22 = 0x16
+DAT 0xf8e7, 0xdeff ; 23 = 0x17
+DAT 0xffff, 0xdfbf ; 24 = 0x18
+DAT 0xffff, 0xffe3 ; 25 = 0x19
+DAT 0x0bab, 0x77bf ; 26 = 0x1a
+DAT 0xfce3, 0xffff ; 27 = 0x1b
+DAT 0x0000,0x0000 ;padding
   ;BUILDING
     ; Font Char 29
         DAT 0x0000, 0x6202
@@ -565,6 +544,7 @@ SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
 ;Font Char 62
     DAT 0x0400, 0x0000
 
+;Splash Screen Definitions
 DAT 0xffff, 0xffff ; 63 = 0x3f
 DAT 0xffff, 0xff1f ; 64 = 0x40
 DAT 0xffff, 0xfff0 ; 65 = 0x41
@@ -613,6 +593,67 @@ DAT 0xf0ff, 0xf0fd ; 107 = 0x6b
 DAT 0xf2ff, 0xfef0 ; 108 = 0x6c
 DAT 0xf6ff, 0xffff ; 109 = 0x6d
 
+;walking pixel
+DAT 0xffff, 0xffff ; 110 = 0x6e
+DAT 0xfeff, 0xffff ; 111 = 0x6f
+DAT 0xfbff, 0xffff ; 112 = 0x70
+DAT 0xf7ff, 0xffff ; 113 = 0x71
+DAT 0x7fff, 0xffff ; 114 = 0x72
+DAT 0xbfff, 0xffff ; 115 = 0x73
+DAT 0xdfff, 0xffff ; 116 = 0x74
+
+;jumping pixel
+
+DAT 0xffff, 0xffff ; 117 = 0x75
+DAT 0xfeff, 0xffff ; 118 = 0x76
+DAT 0xfbff, 0xffff ; 119 = 0x77
+DAT 0xf7ff, 0xffff ; 120 = 0x78
+DAT 0x7fff, 0xffff ; 121 = 0x79
+DAT 0xbfff, 0xffff ; 122 = 0x7a
+DAT 0xdfff, 0xffff ; 123 = 0x7b
+
+:pixelWalking
+   DAT 0x016f ; (2, 1)
+   DAT 0x0170 ; (5, 1)
+   DAT 0x016f ; (8, 1)
+
+:walking_1
+   DAT 0x0301 ; (0, 1)
+   DAT 0x0304 ; (3, 1)
+   DAT 0x0307 ; (6, 1)
+
+:walking_2
+   DAT 0x0302 ; (1, 0)
+   DAT 0x0305 ; (4, 0)
+   DAT 0x0302 ; (7, 0)
+
+:walking_3
+   DAT 0x0303 ; (1, 1)
+   DAT 0x0306 ; (4, 1)
+   DAT 0x0308 ; (7, 1)
+
+:jumping_0
+   DAT 0x0310 ; (18, 0)
+   DAT 0x0314 ; (21, 0)
+   DAT 0x0318 ; (24, 0)
+:jumping_1
+   DAT 0x0311 ; (18, 1)
+   DAT 0x0315 ; (21, 1)
+   DAT 0x0319 ; (24, 1)
+:jumping_2
+   DAT 0x0312 ; (19, 0)
+   DAT 0x0316 ; (22, 0)
+   DAT 0x031a ; (25, 0)
+:jumping_3
+   DAT 0x0313 ; (19, 1)
+   DAT 0x0317 ; (22, 1)
+   DAT 0x031b ; (25, 1)
+
+:jumpingPixel
+   DAT 0x0179 ; (20, 0)
+   DAT 0x017a ; (23, 0)
+   DAT 0x017b ; (26, 0)
+
 :blockLeft
     DAT 0x0106
     DAT 0x0101
@@ -639,26 +680,6 @@ DAT 0xf6ff, 0xffff ; 109 = 0x6d
     DAT 0x002a
     DAT 0x002a
     DAT 0x002a
-
-:thiefHead ; (1,0)
-    DAT 0x2000 ; 0
-    DAT 0x201c ; 1
-    DAT 0x2000 ; 2
-    
-:leftBody ; (0,1)
-    DAT 0x200a ; 0
-    DAT 0x2002 ; 1
-    DAT 0x201a ; 2
-    
-:rightBody ; (1,1)
-    DAT 0x2003 ; 0
-    DAT 0x201b ; 1
-    DAT 0x200b ; 2
-    
-:pixel ; (2,1)
-    DAT 0x1016 ; 0
-    DAT 0x103e ; 1
-    DAT 0x1016 ; 2
 
 :buildingSolidLeft ; (0, 1)
     DAT 0x0020 ; (10, 1) fg#0 bg#0 C#42
