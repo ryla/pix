@@ -1,7 +1,7 @@
     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
-:newGame                ; Stuff that needs to happen to make a new game
     JSR setupClock      ; Set up the clock to tick at 1/60s
+:newGame                ; Stuff that needs to happen to make a new game
     JSR fillScrollBuffer ; Fill the scroll buffer for the start of the game
     JSR setupBlockGenerator ; Setup the block generator
     JSR splashScreen    ; Display splash screen and wait for spacebar
@@ -144,7 +144,7 @@
     SET X, 0x801f       ; Score display fist digit location
     SET B, 1            ; Digit to display
 :displayScoreLoop
-    SET Y, 0x042e       ; Initialize digits to zero
+    SET Y, 0x0433       ; Initialize digits to zero
     
     SET C, [currentScore] ; Set C to the players Current Score
     DIV C, B            ; Divide by B to "shift" C into the right cut off position
@@ -242,7 +242,7 @@
     DAT parapetMiddle
     
 :buildingLUTs   ; Lut of building Luts
-    DAT buildingSolidMiddle
+    DAT buildingSolidRightMiddle
     DAT buildingSolidRight
     DAT gapMiddle
     DAT buildingSolidLeft
@@ -517,76 +517,47 @@
     DAT 0x0bab, 0x77bf ; 26 = 0x1a
     DAT 0xfce3, 0xffff ; 27 = 0x1b
     DAT 0x0000,0x0000 ;padding
+
   ;BUILDING
-    ; Font Char 29
-        DAT 0x0000, 0x6202
-    ; Font Char 30
-        DAT 0x6200, 0x0062
-    ; Font Char 31
-        DAT 0x07fd, 0x9dff
-    ; Font Char 32
-        DAT 0x00ff, 0xffff
-    ; Font Char 33
-        DAT 0xfff8, 0x0262
-    ; Font Char 34
-        DAT 0xffff, 0xffff
-    ; Font Char 35
-        DAT 0x0062, 0x6200
-    ; Font Char 36
-        DAT 0xffff, 0xff00
-    ; Font Char 37
-        DAT 0xff00, 0x0000
-    ; Font Char 38
-        DAT 0x0062, 0x02f8
-    ; Font Char 39
-        DAT 0x02f8, 0xffff
-    ; Font Char 40
-        DAT 0xffff, 0xf802
-    ; Font Char 41
-        DAT 0x0000, 0x00ff
-    ; Font Char 42
-        DAT 0x0000, 0x0000
-    ; Font Char 43
-        DAT 0x0000, 0x6262
-    ; Font Char 44
-        DAT 0xffff, 0x0000
-    ; Font Char 45
-        DAT 0xf8ff, 0xffff
+    DAT 0xffff, 0xfff8 ; 29 = 0x1d
+    DAT 0xffff, 0xffff ; 30 = 0x1e
+    DAT 0x0262, 0x0000 ; 31 = 0x1f
+    DAT 0x0000, 0x0000 ; 32 = 0x20
+    DAT 0x6262, 0x0000 ; 33 = 0x21
+    DAT 0x6202, 0xf8ff ; 34 = 0x22
+    DAT 0x0000, 0xffff ; 35 = 0x23
+    DAT 0xffff, 0xf802 ; 36 = 0x24
+    DAT 0xffff, 0xff00 ; 37 = 0x25
+    DAT 0x6200, 0x0062 ; 38 = 0x26
+    DAT 0x02f8, 0xffff ; 39 = 0x27
+    DAT 0x00ff, 0xffff ; 40 = 0x28
+    DAT 0xfff8, 0x0262 ; 41 = 0x29
+    DAT 0xffff, 0x0000 ; 42 = 0x2a
+    DAT 0x0000, 0x6262 ; 43 = 0x2b
+    DAT 0x0000, 0x6202 ; 44 = 0x2c
+    DAT 0xf8ff, 0xffff ; 45 = 0x2d
+    DAT 0xf802, 0x6200 ; 46 = 0x2e
+    DAT 0xff00, 0x0000 ; 47 = 0x2f
+    DAT 0x0062, 0x6200 ; 48 = 0x30
+    DAT 0x0062, 0x02f8 ; 49 = 0x31
+    DAT 0x0000, 0x00ff ; 50 = 0x32
 
     ;NUMBERS
-    ; Font Char 46
-        DAT 0x837d, 0x83ff ; 0
-    ; Font Char 47
-        DAT 0x7b01, 0x7fff ; 1
-    ; Font Char 48
-        DAT 0x3b4d, 0x73ff ; 2
-    ; Font Char 49
-        DAT 0xbb6d, 0x93ff ; 3
-    ; Font Char 50
-        DAT 0xe1ef, 0x01ff ; 4
-    ; Font Char 51
-        DAT 0xb175, 0x8dff ; 5
-    ; Font Char 52
-        DAT 0x836d, 0x9bff ; 6
-    ; Font Char 53
-        DAT 0x3dcd, 0xf1ff ; 7
-    ; Font Char 54
-        DAT 0x936d, 0x93ff ; 8
-    ; Font Char 55
-        DAT 0xb36d, 0x83ff ; 9
+    DAT 0x837d, 0x83ff ; 51 = 0x33 "0"
+    DAT 0x7b01, 0x7fff ; 52 = 0x34 "1"
+    DAT 0x3b4d, 0x73ff ; 53 = 0x35 "2"
+    DAT 0xbb6d, 0x93ff ; 54 = 0x36 "3" 
+    DAT 0xe1ef, 0x01ff ; 55 = 0x37 "4"
+    DAT 0xb175, 0x8dff ; 56 = 0x38 "5"
+    DAT 0x836d, 0x9bff ; 57 = 0x39 "6"
+    DAT 0x3dcd, 0xf1ff ; 58 = 0x3a "7"
+    DAT 0x936d, 0x93ff ; 59 = 0x3b "8"
+    DAT 0xb36d, 0x83ff ; 60 = 0x3c "9"
 
-    ;other turret that we forgot
 
- ; Font Char 56
-    DAT 0x0262, 0x0000
-; Font Char 57
-    DAT 0xffff, 0xffff
-; Font Char 58
-    DAT 0x6202, 0xf8ff
-; Font Char 59
-    DAT 0x6262, 0x0000
-; Font Char 60
-    DAT 0x0000, 0x0007
+;Padding
+
+
 ; Font Char 61
     DAT 0x0000, 0xffff
 
@@ -663,6 +634,8 @@
     DAT 0xbfff, 0xffff ; 122 = 0x7a
     DAT 0xdfff, 0xffff ; 123 = 0x7b
 
+;LUTs with animation frame indexes for various graphics
+
 :pixelWalking
     DAT 0x016f ; (2, 1)
     DAT 0x0170 ; (5, 1)
@@ -707,27 +680,6 @@
     DAT 0x0179 ; (20, 0)
     DAT 0x017a ; (23, 0)
     DAT 0x017b ; (26, 0)
-
-:blockLeft
-    DAT 0x0106
-    DAT 0x0101
-    DAT 0x0103
-    DAT 0x0104
-    ;DAT 0x0102
-    
-:blockRight
-    DAT 0x002a
-    DAT 0x332a
-    DAT 0x332a
-    DAT 0x332a
-    ;DAT 0x0106
-    
-:buildingSolidMiddle
-    DAT 0x332a
-    DAT 0x332a
-    DAT 0x332a
-    DAT 0x332a
-    ;DAT 0x0106
     
 :gapMiddle
     DAT 0x002a
@@ -735,47 +687,48 @@
     DAT 0x002a
     DAT 0x002a
 
-:buildingSolidLeft ; (0, 1)
-    DAT 0x0020 ; (10, 1) fg#0 bg#0 C#42
-    DAT 0x0324 ; (7, 1) fg#0 bg#1 C#34
-    DAT 0x032c ; (3, 1) fg#1 bg#0 C#44
-    DAT 0x0325 ; (0, 1) fg#1 bg#0 C#37
-;    DAT 0x332A
-
-:buildingSolidRight ; (0, 1)
-    DAT 0x3320 ; (10, 1) fg#0 bg#0 C#42
-    DAT 0x3024 ; (7, 1) fg#0 bg#1 C#34
-    DAT 0x302c ; (3, 1) fg#1 bg#0 C#44
-    DAT 0x3025 ; (0, 1) fg#1 bg#0 C#37
- ;   DAT 0x002A
-
-:parapetLeft    ;correct
-    DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
-    DAT 0x0328 ; (7, 0) fg#0 bg#1 C#40
-    DAT 0x0321 ; (3, 0) fg#1 bg#0 C#33
-    DAT 0x301F ; (0, 0) fg#1 bg#0 C#31
-    ;DAT 0x3027 ;(1,0) C#60
-    
+:parapetLeft
+    DAT 0x031d ; (0, 0)
+    DAT 0x0324 ; (5, 0)
+    DAT 0x0329 ; (10, 0)
+    DAT 0x032e ; (15, 0)
+:buildingSolidLeft
+    DAT 0x001e ; (0, 1)
+    DAT 0x0025 ; (5, 1)
+    DAT 0x002a ; (10, 1)
+    DAT 0x002f ; (15, 1)
 :parapetLeftMiddle
-    DAT 0x0338 ;(1,0) C#35
-    DAT 0x031e ;(1,0) C#35
-    DAT 0x032b ;(1,0) C#35
-    DAT 0x0323 ;(1,0) C#35
-    
+    DAT 0x031f ; (1, 0)
+    DAT 0x0326 ; (6, 0)
+    DAT 0x032b ; (11, 0)
+    DAT 0x0330 ; (16, 0)
+:buildingSolidMiddle
+    DAT 0x0320 ; (1, 1)
+    DAT 0x0320 ; (6, 1)
+    DAT 0x0320 ; (11, 1)
+    DAT 0x0320 ; (16, 1)
 :parapetMiddle
-    DAT 0x033b ;(1,0) C#
-    DAT 0x031e ;(1,0) C#
-    DAT 0x032b ;(1,0) C#
-    DAT 0x0323 ;(1,0) C#
-
-:parapetRightMiddle        ;correct
-    DAT 0x033b ;(1,0) C#59
-    DAT 0x031e ;(1,0) C#30
-    DAT 0x031d ;(1,0) C#29
-    DAT 0x0326 ;C#38
-
+    DAT 0x0321 ; (2, 0)
+    DAT 0x0326 ; (7, 0)
+    DAT 0x032b ; (12, 0)
+    DAT 0x0330 ; (17, 0)
+:parapetRightMiddle
+    DAT 0x0321 ; (3, 0)
+    DAT 0x0326 ; (8, 0)
+    DAT 0x032c ; (13, 0)
+    DAT 0x0331 ; (18, 0)
+:buildingSolidRightMiddle
+    DAT 0x0320 ; (3, 1)
+    DAT 0x0320 ; (8, 1)
+    DAT 0x0320 ; (13, 1)
+    DAT 0x0332 ; (18, 1)
 :parapetRight
-    DAT 0x033a ;C#58
-    DAT 0x0327 ; (3, 0) fg#1 bg#0 C#39
-    DAT 0x032d ;C#45
-    DAT 0x002A ;blank
+    DAT 0x0322 ; (4, 0)
+    DAT 0x0327 ; (9, 0)
+    DAT 0x032d ; (14, 0)
+    DAT 0x031e ; (19, 0)
+:buildingSolidRight
+    DAT 0x0323 ; (4, 1)
+    DAT 0x0328 ; (9, 1)
+    DAT 0x031e ; (14, 1)
+    DAT 0x031e ; (19, 1)
