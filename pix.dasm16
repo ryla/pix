@@ -14,17 +14,18 @@
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
     JSR keyboardRead
+    SET [theifJumpState], [keyboardState]
 
     ADD [theifJumpTimer], 1
                         ; Increment jump timer
-    IFN [keyboardState], 1;
+    IFE [keyboardState], 0;
                         ; Reset jump timer if key is up
     SET [theifJumpTimer], 0
 
     IFG [theifJumpTimer], 20
                         ; When air time has reached maximum,
-    SET [keyboardState], 0
-                        ; Set keyboard to off
+    SET [theifJumpState], 0
+                        ; Stop jumping
         
     ADD [mainLoopCounter], 1
                         ; Increment frame counter per cycle
@@ -39,13 +40,13 @@
 
 ; Scrolling
     JSR scroll
-    
+
 ; Running
-    IFN [keyboardState], 1
+    IFE [theifJumpState], 0
     JSR running
 
 ; Jumping    
-    IFE [keyboardState], 1
+    IFE [theifJumpState], 1
     JSR jumping
 
     JSR calcScore
@@ -54,6 +55,9 @@
                         ; service routine, return to where we came from
 
 :theifJumpTimer
+    DAT 0
+
+:theifJumpState
     DAT 0
 
 :mainLoopCounter
