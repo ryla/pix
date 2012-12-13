@@ -41,6 +41,12 @@
 ; Scrolling
     JSR scroll
 
+; Collision detection
+    IFE [theifJumpState], 0
+    IFE [0x8206], gapMiddle
+    IFE [0x8205], gapMiddle
+    SET PC, gameOver
+
 ; Running
     IFE [theifJumpState], 0
     JSR running
@@ -62,6 +68,14 @@
 
 :mainLoopCounter
     DAT 0
+
+; End game and stop sending clock interrupts
+:gameOver
+    SET A, 2            ; Put clock into set interrupt mode
+    SET B, 0            ; Set clock interrupt message to 1 (off)
+    HWI [clockHWaddr]   ; Send settings to the clock
+    SET SP, 0           ; Clear the stack
+    SET PC, infiniteStall
 
 ; Initialize the scroll buffer (at 0x8200) with addresses of tile indices
 :fillScrollBuffer
