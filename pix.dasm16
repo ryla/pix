@@ -22,7 +22,7 @@
                         ; Reset jump timer if key is up
     SET [theifJumpTimer], 0
 
-    IFG [theifJumpTimer], 20
+    IFG [theifJumpTimer], 27
                         ; When air time has reached maximum,
     SET [theifJumpState], 0
                         ; Stop jumping
@@ -183,7 +183,7 @@
     SET PC, POP         ; Return from subroutine
 
 :randomMin            
-    DAT 0x0000          ; Lower bound for random number
+    DAT 0x0002          ; Lower bound for random number
 
 :randomMax
     DAT 0x0064          ; Upper bound for random number    
@@ -199,12 +199,8 @@
     SET [0x823f], [buildingLuts + A]
                         ; pick the Ath Lut
 
-    IFE [blockGeneratorIndex], 1
-    SET [blockGeneratorCounter], 3
-    IFE [blockGeneratorIndex], 4
-    SET [blockGeneratorCounter], 6
     
-    IFE [blockGeneratorIndex], 2
+	IFE [blockGeneratorIndex], 2
     SET PC, blockGeneratorWait
     
 	IFE [blockGeneratorIndex], 5
@@ -221,6 +217,12 @@
     SUB [blockGeneratorCounter], 1
     IFG [blockGeneratorCounter], 0
     SET PC, POP
+    IFE [blockGeneratorIndex], 2
+    SET [randomMax], 20
+    IFE [blockGeneratorIndex], 5
+    SET [randomMax], 6
+    JSR random
+    SET [blockGeneratorCounter] , X
     SET PC, blockGeneratorAdd
 
 :parapetLuts    ; Lut of parapet Luts
@@ -377,7 +379,7 @@
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
-    SET B, 20            ; Set clock frequency to 1/60s
+    SET B, 1            ; Set clock frequency to 1/60s
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
