@@ -3,17 +3,16 @@
     JSR setupClock      ; Set up the clock to tick at 1/60s
     JSR splashScreen    ; Display splash screen and wait for spacebar
     JSR setRandomSeed   ; Set the random seed from the clock
-    JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
+    JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s 
  
 :infiniteStall
-    SET PC, infiniteStall
+    SET PC, infiniteStall 
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
-    SUB [blockPosition], 1
-                        ; Increment position by 1
+    SUB [blockPosition], 1  ; Increment position by 1
     IFU [blockPosition], 0
     SET [blockPosition], 131
 
@@ -37,27 +36,21 @@
     ADD Z, 1             
     MOD Z, 3            ; Mod for 3 frames of animation
     
-    
- 
     IFC X, 0x7f60
     SET [X], [parapetLeft+Y]
-                        ; Display on one row down 
+             
     ADD X,1
     IFC X, 0x7f60
     SET [X], [parapetLeftMiddle+Y] 
-                        ; Display on 0ith frame defined by literal
-                        
-     ADD X,1
+          
+    ADD X,1
     IFC X, 0x7f60
     SET [X], [parapetMiddle+Y] 
-                        ; Display on 0ith frame defined by literal
-   
-                       
-     ADD X,1
+      
+    ADD X,1
     IFC X, 0x7f60
     SET [X], [parapetRightMiddle+Y] 
-                        ; Display on 0ith frame defined by literal
-   
+    
     ADD X,1
     IFC X, 0x7f60
     SET [X], [parapetRight+Y] 
@@ -71,6 +64,7 @@
 ; Jumping    
     IFE C, 1
     IFL I, 10
+    SET Z,0
     JSR jumping
 
 
@@ -143,14 +137,19 @@
 
 :randomSeed              
     DAT 0x3e42          ; Seed for random number
+    
 :blockPosition                        
     DAT 0x0000              
-                        
+
+:jumpingFrame
+	DAT 0x0000
+
 :running
     SET [0x8045], [0x1100]
     SET [0x8026], [0x2200]
     SET [0x8047], [0x3300]
-
+	SET [0x8025], [0x1100]
+    
     SET [0x8046], [thiefHead+Z]
                         ; Display on 0th frame defined by literal 
     SET [0x8065], [leftBody+Z]
@@ -164,18 +163,22 @@
     SET [0x8066], [0x1100] 
     SET [0x8067], [0x1100] 
 
-    ADD I,1
-    SET [0x8026], [thiefHead+Z]
-    SET [0x8045], [leftBody+Z]
-                        ; Display on one row down 
-    SET [0x8046], [rightBody+Z]
-    SET [0x8047], [pixel+Z]
-    SET PC, POP
+
+;:jumpCycle
+    SET [0x8026], [headJump+Z]
+    SET [0x8045], [leftBodyJump+Z]
+    SET [0x8025], [leftHandJump+Z]
+    SET [0x8046], [rightBodyJump+Z]
+    SET [0x8047], [pixelJump+Z]
+
+	SET PC, POP
+    ;JSR jumpCycle
 
 ; Display splash screen until spacebar pressed
 :splashScreen
     SET A, 2
     SET B,  " "
+    SET [0x8065], [0x1100] 
 :splashScreenLoop
     HWI [keyboardHWaddr]
     IFE C, 0
@@ -185,7 +188,7 @@
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
-    SET B, 1            ; Set clock frequency to 1/60s
+    SET B, 1  	        ; Set clock frequency to 1/60s
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
@@ -406,7 +409,7 @@ DAT 0x0000, 0x0007
 ; Font Char 61
 DAT 0x0000, 0xffff
 
-;Missing PIX
+;Missing Pixel
 
 ;Font Char 62
 DAT 0x0400, 0x0000
@@ -418,22 +421,18 @@ DAT 0x0400, 0x0000
     DAT 0x0101
     DAT 0x0103
     DAT 0x0104
-    ;DAT 0x0102
-    
+
 :blockRight
     DAT 0x002a
     DAT 0x332a
     DAT 0x332a
     DAT 0x332a
-    ;DAT 0x0106
-    
+
 :buildingSolidMiddle
     DAT 0x332a
     DAT 0x332a
     DAT 0x332a
-    DAT 0x332a
-    ;DAT 0x0106
-    
+    DAT 0x332a  
     
 :thiefHead ; (1,0)
     DAT 0x2000 ; 0
@@ -454,6 +453,27 @@ DAT 0x0400, 0x0000
     DAT 0x1016 ; 0
     DAT 0x103e ; 1
     DAT 0x1016 ; 2
+
+:leftHandJump ; (18, 0)
+   DAT 0x200c ; (18, 0) fg#2 bg#1 C#12
+   DAT 0x2017 ; (21, 0) fg#2 bg#1 C#23
+   DAT 0x2012 ; (24, 0) fg#2 bg#1 C#18
+:leftBodyJump ; (18, 1)
+   DAT 0x2008 ; (18, 1) fg#2 bg#1 C#8
+   DAT 0x2018 ; (21, 1) fg#2 bg#1 C#24
+   DAT 0x2010 ; (24, 1) fg#2 bg#1 C#16
+:headJump ; (19, 0)
+   DAT 0x2013 ; (19, 0) fg#2 bg#1 C#19
+   DAT 0x2011 ; (22, 0) fg#2 bg#1 C#17
+   DAT 0x100f ; (25, 0) fg#2 bg#1 C#15
+:rightBodyJump ; (19, 1)
+   DAT 0x2015 ; (19, 1) fg#2 bg#1 C#21
+   DAT 0x2004 ; (22, 1) fg#2 bg#1 C#4
+   DAT 0x200d ; (25, 1) fg#2 bg#1 C#13
+:pixelJump ; (20, 0)
+   DAT 0x1019 ; (20, 0) fg#1 bg#0 C#25
+   DAT 0x1019 ; (23, 0) fg#1 bg#0 C#25
+   DAT 0x1019 ; (26, 0) fg#1 bg#0 C#25
 
 
 :buildingSolidLeft ; (0, 1)
