@@ -311,6 +311,8 @@ SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
 
     JSR keyboardRead
     IFE [keyboardState], 0
+    JSR clearScreen
+    IFE [keyboardState], 0
     SET PC, POP
     SET PC, splashScreen
 
@@ -325,6 +327,15 @@ SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
 :keyboardState
     DAT 0
 
+:clearScreen
+    SET X,0x7fff 
+    :clearLoop
+    ADD X,1
+	SET [X],0x002a
+    IFG X,0x817f
+	SET PC,POP
+	JSR clearLoop
+    
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
