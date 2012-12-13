@@ -41,12 +41,6 @@
 ; Scrolling
     JSR scroll
 
-; Collision detection
-    IFE [theifJumpState], 0
-    IFE [0x8206], gapMiddle
-    IFE [0x8205], gapMiddle
-    SET PC, gameOver
-
 ; Running
     IFE [theifJumpState], 0
     JSR running
@@ -56,6 +50,12 @@
     JSR jumping
 
     JSR calcScore
+
+; Collision detection
+    IFE [theifJumpState], 0
+    IFE [0x8206], gapMiddle
+    IFE [0x8205], gapMiddle
+    SET PC, gameOver
 
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
