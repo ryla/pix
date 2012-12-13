@@ -192,35 +192,55 @@
     DAT 0x3e42          ; Seed for random number
 
 ; Feeds random number generator to get gap size, and starting point
-:blockGenerator
-    ADD [blockGeneratorIndex], 1
-                        ; move on to next animation
-    MOD [blockGeneratorIndex], 6
-                        ; keep it between 0 and 6
+:blockGenerator 
     SET A, [blockGeneratorIndex]
     SET [0x821f], [parapetLuts + A]
                         ; pick the Ath Lut
     SET [0x823f], [buildingLuts + A]
                         ; pick the Ath Lut
+
+    IFE [blockGeneratorIndex], 1
+    SET [blockGeneratorCounter], 3
+    IFE [blockGeneratorIndex], 4
+    SET [blockGeneratorCounter], 6
+    
+    IFE [blockGeneratorIndex], 2
+    SET PC, blockGeneratorWait
+    
+	IFE [blockGeneratorIndex], 5
+    SET PC, blockGeneratorWait
+    
+:blockGeneratorAdd
+    ADD [blockGeneratorIndex], 1
+                        ; move on to next animation
+    MOD [blockGeneratorIndex], 6
+                        ; keep it between 0 and 6
     SET PC, POP
 
+:blockGeneratorWait
+    SUB [blockGeneratorCounter], 1
+    IFG [blockGeneratorCounter], 0
+    SET PC, POP
+    SET PC, blockGeneratorAdd
+
 :parapetLuts    ; Lut of parapet Luts
-    DAT parapetLeft
-    DAT parapetLeftMiddle
-    DAT parapetMiddle
     DAT parapetRightMiddle
     DAT parapetRight
     DAT gapMiddle
+    DAT parapetLeft
+    DAT parapetLeftMiddle
+    DAT parapetMiddle
     
 :buildingLuts   ; Lut of building Luts
-    DAT buildingSolidLeft
-    DAT buildingSolidMiddle
-    DAT buildingSolidMiddle
     DAT buildingSolidMiddle
     DAT buildingSolidRight
     DAT gapMiddle
+    DAT buildingSolidLeft
+    DAT buildingSolidMiddle
+    DAT buildingSolidMiddle
 
-    
+:blockGeneratorCounter
+	DAT 0x0005 			; when in state 1 or 4 get num from random gen 
 
 
 :blockGeneratorIndex
@@ -357,7 +377,7 @@
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
-    SET B, 1            ; Set clock frequency to 1/60s
+    SET B, 20            ; Set clock frequency to 1/60s
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
