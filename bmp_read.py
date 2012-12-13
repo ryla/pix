@@ -73,7 +73,41 @@ def gen_palette_comment(char):
 
     for y in range(8):
         print '    ;' + ' '.join([nice_format(c) for c in displayChar[y]]) + ';'
+        
+def generate_animation(anim_title = "walking", frame_size = (3,2), frame_count = 3, offset_idx = 0):
+    frame_width, frame_height = frame_size
 
+    curr_index = 0
+    
+    all_chars = enumerate(unique_chars)
+    for x in range(0+18, frame_width+18):
+        for y in range(frame_height):
+            print ":"+anim_title+"_"+str(curr_index) + " ; ("+str(x)+", "+str(y)+")"
+            for frame_i in range(frame_count):
+                fg_col = "0"
+                bg_col = "0"
+                font_char = "00"
+                font_char_idx = 0
+                fg_col_idx = 0
+                bg_col_idx = 0
+                curr_x,curr_y = (x+(frame_i*frame_width),y)
+                for i,color in enumerate(color_palette):
+                    for (col_type,xy) in color_palette[color]:
+                        if (xy[0], xy[1]) == (curr_x,curr_y):
+                            if col_type == 0:
+                                #bg
+                                bg_col = hex(i)[2:]
+                                bg_col_idx = i
+                            else:
+                                fg_col = hex(i)[2:]
+                                fg_col_idx = i
+                for (i, char) in enumerate(unique_chars):
+                    for xy in unique_chars[char]:
+                        if (xy[0], xy[1]) == (curr_x,curr_y):
+                            font_char_idx = i + offset_idx
+                            font_char = make_len_2(hex(i + offset_idx))[2:]
+                print "    DAT 0x%s%s%s ; %s fg#%d bg#%d C#%d" % (fg_col, bg_col, font_char, (curr_x,curr_y), fg_col_idx, bg_col_idx, font_char_idx)
+            curr_index += 1
 
 if __name__ == "__main__":
     offset = int(sys.argv[2])
@@ -92,11 +126,11 @@ if __name__ == "__main__":
                 if not color in color_palette:
                     color_palette[color] = list()
                 color_palette[color].append((i,(x,y)))
-            if not words in unique_chars and not notted(words) in unique_chars:
-                unique_chars[words] = list()
-            if not notted(words) in unique_chars:
-                unique_chars[words].append((x,y))
+            if notted(words) in unique_chars:
+                unique_chars[notted(words)].append((x,y))
             else:
+                if not words in unique_chars:
+                    unique_chars[words] = list()
                 unique_chars[words].append((x,y))
 
     print ":monitorFont"
@@ -119,34 +153,4 @@ if __name__ == "__main__":
             print "        ; at (%s,%s) as %s color" % (xy[0], xy[1], col_type)
         print "    DAT %s" % color
 
-    # Animation for walking
-    frame_width = 3
-    frame_height = 2
-    frame_count = 3
-    curr_block = [0,0]
-    curr_index = 0
-    anim_title = "walking"
-    all_chars = enumerate(unique_chars)
-    for x in range(frame_width):
-        for y in range(frame_height):
-            print ":"+anim_title+"_"+str(curr_index) + " ; ("+str(x)+", "+str(y)+")"
-            for frame_i in range(frame_count):
-                fg_col = "0"
-                bg_col = "0"
-                font_char = "00"
-                curr_x,curr_y = (x+(frame_i*frame_width),y)
-                for i,color in enumerate(color_palette):
-                    for (col_type,xy) in color_palette[color]:
-                        if (xy[0], xy[1]) == (curr_x,curr_y):
-                            if col_type == 0:
-                                #bg
-                                bg_col = hex(i)[2:]
-                            else:
-                                fg_col = hex(i)[2:]
-                for (i, char) in enumerate(unique_chars):
-                    for xy in unique_chars[char]:
-                        if (xy[0], xy[1]) == (curr_x,curr_y):
-                            font_char = make_len_2(hex(i))[2:]
-                print "DAT 0x"+fg_col+bg_col+font_char
-            curr_index += 1
-
+    generate_animation("jumping", (3,2), 3)
