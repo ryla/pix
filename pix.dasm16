@@ -693,10 +693,10 @@
     DAT 0x0329 ; (10, 0)
     DAT 0x032e ; (15, 0)
 :buildingSolidLeft
-    DAT 0x001e ; (0, 1)
-    DAT 0x0025 ; (5, 1)
-    DAT 0x002a ; (10, 1)
-    DAT 0x002f ; (15, 1)
+    DAT 0x031e ; (0, 1)
+    DAT 0x0325 ; (5, 1)
+    DAT 0x032a ; (10, 1)
+    DAT 0x032f ; (15, 1)
 :parapetLeftMiddle
     DAT 0x031f ; (1, 0)
     DAT 0x0326 ; (6, 0)
