@@ -94,7 +94,7 @@
 
 ; Animate everything in the scroll buffer
 :scroll
-    SET X, 0            ; Set X to 0, I and J are weirdly in use
+    SET I, 0            ; Set X to 0, I and J are weirdly in use
     ADD [scrollPosition], 1
                         ; Increment the animation index
     MOD [scrollPosition], 4
@@ -109,20 +109,20 @@
                         ; Move each block of the first row over 1
     SET [0x8220+X], [0x8221+X]
                         ; Move each block of the second row over 1
-    ADD X, 1            ; Increment X
-    IFL X, 31           ; IF X is less than 31, keep looping
+    ADD I, 1            ; Increment X
+    IFL I, 31           ; IF X is less than 31, keep looping
     SET PC, scrollMoveLoop
     JSR blockGenerator   
                         ; Add the next block to the end of row
-    SET X, 0            ; Set X to 0 again
+    SET I, 0            ; Set X to 0 again
 
 :scrollAnimLoop
-    SET Y, [0x8200+X]   ; Store the base address of the frame in Y
-    ADD Y, [scrollPosition]
+    SET X, [0x8200+I]   ; Store the base address of the frame in Y
+    ADD X, [scrollPosition]
                         ; Add current animation index to Y
-    SET [0x8080+X], [Y] ; Look up VRAM word and write it to VRAM
-    ADD X, 1            ; Increment X
-    IFL X, 64           ; Loop while X is less than 64
+    SET [0x8080+I], [X] ; Look up VRAM word and write it to VRAM
+    ADD I, 1            ; Increment X
+    IFL I, 64           ; Loop while X is less than 64
     SET PC, scrollAnimLoop  
     SET PC, POP         ; Return from subroutine
 
