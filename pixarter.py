@@ -31,11 +31,13 @@ class CharPalette:
     def __init__(self):
         self.unique_words = list()
         self.loc_to_words = dict()
+        self.loc_to_color_idx = dict()
 
         self.unique_loc_to_words = dict()
 
-    def add_word(self, loc, words):
+    def add_word(self, loc, words, fgcolor, bgcolor):
         self.loc_to_words[loc] = words
+        self.loc_to_color_idx[loc] = (bgcolor,fgcolor)
         if not words in self.unique_words:
             self.unique_words.append(words)
             self.unique_loc_to_words[words] = loc
@@ -72,17 +74,15 @@ class ImageMap:
 
         image.save(name)
 
-    def get_splash_screen(self):
+    def get_splash_screen(self, char_offset=0):
 
         def make_len_3(hex_thing):
             hex_thing = hex_thing[2:]
             return '0x%s%s' % ('0'*(3 - len(hex_thing)), hex_thing)
 
-        offset = 63
-
         for i,char in enumerate(self.chars.unique_words):
             #gen_palette_comment(char)
-            print "DAT %s, %s ; %s = %s" % (char[0], char[1], i+offset, hex(i+offset))
+            print "DAT %s, %s ; %s = %s" % (char[0], char[1], i+char_offset, hex(i+char_offset))
 
         print
         print
@@ -90,13 +90,12 @@ class ImageMap:
         for x in range(32):
             for y in range(12):
                 char = self.chars.loc_to_words[(x,y)]
-                char_idx = hex(self.chars.unique_words.index(char)+offset)[2:]
+                char_idx = hex(self.chars.unique_words.index(char)+char_offset)[2:]
 
                 if len(char_idx) == 1:
                     char_idx = "0"+char_idx
 
-                fg_col = 4
-                bg_col = 0
+                bg_col, fg_col = self.chars.loc_to_color_idx[(x,y)]
 
                 assembly_loc = x+32*y
                 assembly_loc = make_len_3(hex(assembly_loc))[2:]
@@ -104,8 +103,57 @@ class ImageMap:
                 #print "MAD"+str(act_y)
                 #print hex(act_y)[2:]
                 if char != ('0xffff','0xffff'):
-                    print "SET [0x8%s], 0x%s%s%s ; %s Loc %s=0x%s; char_idx: %s=0x%s" % (assembly_loc, bg_col, fg_col, char_idx, (x,y), x+32*y, assembly_loc, self.chars.unique_words.index(char)+offset, char_idx)
+                    print "SET [0x8%s], 0x%s%s%s ; %s Loc %s=0x%s; char_idx: %s=0x%s" % (assembly_loc, bg_col, fg_col, char_idx, (x,y), x+32*y, assembly_loc, self.chars.unique_words.index(char)+char_offset, char_idx)
 
+    def get_anim(self, char_offset=0):
+
+        #char_offset = 117
+        # Jumping
+        frame_width = 3
+        frame_height = 2
+
+        frame_count_x = 3
+        frame_count_y = 1
+
+        x_offset = 18
+        y_offset = 0
+
+        anim_name = "jumpingPixel"
+
+        '''
+        # Walking
+        frame_width = 3
+        frame_height = 2
+
+        frame_count_x = 3
+        frame_count_y = 1
+
+        x_offset = 0
+        y_offset = 0
+        '''
+
+
+        def make_len_2(hex_thing):
+            hex_thing = hex_thing[2:]
+            return '0x%s%s' % ('0'*(2 - len(hex_thing)), hex_thing)
+
+        for i,char in enumerate(self.chars.unique_words):
+            #gen_palette_comment(char)
+            print "DAT %s, %s ; %s = %s" % (char[0], char[1], i+char_offset, hex(i+char_offset))
+
+        curr_anim = 0
+        for x in range(frame_width):
+            for y in range(frame_height):
+                print ":"+anim_name+"_"+str(curr_anim)
+                
+                for i in range(frame_count_x):
+                    bg_col, fg_col = self.chars.loc_to_color_idx[(x,y)]
+
+                    loc = (x_offset+x+i*frame_width,y_offset+y*frame_count_y)
+                    char = self.chars.loc_to_words[loc]
+                    char_idx = make_len_2(hex(self.chars.unique_words.index(char)+char_offset))[2:]
+                    print "    DAT 0x%s%s%s ; %s" % (bg_col, fg_col, char_idx, loc)
+                curr_anim += 1
 
 def get_num_from_rgb(col):
     col = col[0:3]
@@ -140,7 +188,7 @@ def read_grid_square(pixels, startx, starty, color_palette):
     words = (make_len_4(hex(int('0b'+all_words[0:16],2))), 
             make_len_4(hex(int('0b'+all_words[16:32],2))))
 
-    return words # 0s are FG
+    return words, local_palette # 0s are FG
 
 def write_to_image(char,image_pixels,start_x,start_y):
 
@@ -216,8 +264,11 @@ def parse_image(image, offset = 0):
 
     for x in range(int(image_width/4)):
         for y in range(int(image_height/8)):
-            char_words = read_grid_square(image_pixels, x, y, color_palette)
-            char_palette.add_word((x,y), char_words)
+            char_words, local_palette = read_grid_square(image_pixels, x, y, color_palette)
+            cols = [0,0]
+            for col in local_palette:
+                cols[color_palette.get_fgbg_from_color(col)] = color_palette.get_index_from_color(col)
+            char_palette.add_word((x,y), char_words, cols[FG], cols[BG])
 
     return image_map
 
@@ -237,6 +288,7 @@ if __name__ == "__main__":
     image = Image.open(image_name)
     image_map = parse_image(image, offset = char_offset)
 
-    image_map.create_image("moo.png", image.size)
+    #image_map.create_image("moo.png", image.size)
     image_map.get_splash_screen()
+    #image_map.get_anim()
         
