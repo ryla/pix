@@ -1,4 +1,4 @@
-    JSR detectHW        ; Find the addresses of HW we care about
+    JSR detectHW           ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock to tick at 1/60s
     JSR fillScrollBuffer ; Fill the scroll buffer for the start of the game
@@ -110,8 +110,7 @@
     ADD X, 1            ; Increment X
     IFL X, 31           ; IF X is less than 31, keep looping
     SET PC, scrollMoveLoop
-    SET [0x821f], gapMiddle
-    SET [0x823f], gapMiddle     
+    JSR blockGenerator   
                         ; Add the next block to the end of row
     SET X, 0            ; Set X to 0 again
 
@@ -159,7 +158,7 @@
 :currentScore            
     DAT 0x0000          ; Player's current score
 
-; Get clock value from start screen to make random generatior
+; Get clock value from start screen to make random generator
 ; As random as possible
 :setRandomSeed        
     SET A, 1            ; Store number of ticks elapsed since last 
@@ -193,29 +192,39 @@
     DAT 0x3e42          ; Seed for random number
 
 ; Feeds random number generator to get gap size, and starting point
-:blockCreator    
-    ADD [size], [startingPoint] 
-                        ; Add the size and the starting point of the previous gap together
-    ADD [size], 5       ; Add three to this number because we do not want gaps that are too close together
-    SET [randomMin], [size]
-                        ; Set the min distance to this number
-    ADD [size] , 40     ; Add 10 more to get a new max
-    SET [randomMax], [size]
-                        ; Set max to this number
-    JSR random          ; Call random num gen for starting
-    SET [startingPoint], X
-                        ; Save the new starting point
-    SET [randomMin], 1  ; Min Number of gap spaces in a row
-    SET [randomMax], 5  ; Max number of gap spaces in a row
-    JSR random          ; Call random num generator for size
-    SET [size], X       ; Save the new size
-    SET PC, POP         ; Return from subroutine
+:blockGenerator
+    ADD [blockGeneratorIndex], 1
+                        ; move on to next animation
+    MOD [blockGeneratorIndex], 6
+                        ; keep it between 0 and 6
+    SET A, [blockGeneratorIndex]
+    SET [0x821f], [parapetLuts + A]
+                        ; pick the Ath Lut
+    SET [0x823f], [buildingLuts + A]
+                        ; pick the Ath Lut
+    SET PC, POP
 
-:startingPoint
-    DAT 0x0000          ; Starting point for gap
+:parapetLuts    ; Lut of parapet Luts
+    DAT parapetLeft
+    DAT parapetLeftMiddle
+    DAT parapetMiddle
+    DAT parapetRightMiddle
+    DAT parapetRight
+    DAT gapMiddle
+    
+:buildingLuts   ; Lut of building Luts
+    DAT buildingSolidLeft
+    DAT buildingSolidMiddle
+    DAT buildingSolidMiddle
+    DAT buildingSolidMiddle
+    DAT buildingSolidRight
+    DAT gapMiddle
 
-:size
-    DAT 0x0000          ; Size for gap
+    
+
+
+:blockGeneratorIndex
+    DAT 0x0000          ; Which animation block we are at
 
 :running
     SET A, [theifAnimIndex]
@@ -689,14 +698,14 @@
     DAT 0x0324 ; (7, 1) fg#0 bg#1 C#34
     DAT 0x032c ; (3, 1) fg#1 bg#0 C#44
     DAT 0x0325 ; (0, 1) fg#1 bg#0 C#37
-    DAT 0x332A
+;    DAT 0x332A
 
 :buildingSolidRight ; (0, 1)
     DAT 0x3320 ; (10, 1) fg#0 bg#0 C#42
     DAT 0x3024 ; (7, 1) fg#0 bg#1 C#34
     DAT 0x302c ; (3, 1) fg#1 bg#0 C#44
     DAT 0x3025 ; (0, 1) fg#1 bg#0 C#37
-    DAT 0x002A
+ ;   DAT 0x002A
 
 :parapetLeft    ;correct
     DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
