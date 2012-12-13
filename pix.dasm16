@@ -13,37 +13,41 @@
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
-    SET A, 2
-    SET B, " "
-    HWI [keyboardHWaddr]
+    JSR keyboardRead
+    IFE [theifJumpTimer], 20
+                        ; When air time has reached maximum,
+    SET [keyboardState], 0
+                        ; Set keyboard to off
         
-    IFE I, 20           ; When air time has reached maximum,
-    SET C, 0            ; Set keyboard to off
-        
-    ADD J, 1            ; Increment frame counter (J) per cycle
-    MOD J, 20           ; Limit J to be less than 10 to run every 1/6 second
+    ADD [mainLoopCounter], 1
+                        ; Increment frame counter per cycle
+    MOD [mainLoopCounter], 10
+                        ; Limit J to be less than 10 to run every 1/6 second
     
-    IFE J, 0            ; Increment which frame number
-    ADD Z, 1             
-    MOD Z, 3            ; Mod for 3 frames of animation
+    IFE [mainLoopCounter], 0            
+    ADD [theifAnimIndex], 1             
+                        ; Increment which frame number 
+    MOD [theifAnimIndex], 3
+                        ; Mod for 3 frames of animation
 
 ; Scrolling
     JSR scroll
     
 ; Running
-    IFN C, 1
-    SET I, 0    
+    IFN [keyboardState], 1
     JSR running
 
 ; Jumping    
-    IFE C, 1
-    IFL I, 10
+    IFE [keyboardState], 1
     JSR jumping
 
     JSR calcScore
 
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
+
+:mainLoopCounter
+    DAT 0
 
 ; Initialize the scroll buffer (at 0x8200) with addresses of tile indices
 :fillScrollBuffer
@@ -186,41 +190,58 @@
     DAT 0x0000          ; Size for gap
 
 :running
+    SET [theifJumpTimer], 0
+    SET A, [theifAnimIndex]
     SET [0x8045], [0x1100]
     SET [0x8026], [0x2200]
     SET [0x8047], [0x3300]
 
-    SET [0x8046], [thiefHead+Z]
+    SET [0x8046], [thiefHead+A]
                         ; Display on 0th frame defined by literal 
-    SET [0x8065], [leftBody+Z]
+    SET [0x8065], [leftBody+A]
                         ; Display on one row down 
-    SET [0x8066], [rightBody+Z]
-    SET [0x8067], [pixel+Z]
+    SET [0x8066], [rightBody+A]
+    SET [0x8067], [pixel+A]
     SET PC, POP
 
 :jumping
+    ADD [theifJumpTimer], 1
+    SET A, [theifAnimIndex]
     SET [0x8065], [0x1100]  
     SET [0x8066], [0x1100] 
     SET [0x8067], [0x1100] 
 
-    ADD I,1
-    SET [0x8026], [thiefHead+Z]
-    SET [0x8045], [leftBody+Z]
+    SET [0x8026], [thiefHead+A]
+    SET [0x8045], [leftBody+A]
                         ; Display on one row down 
-    SET [0x8046], [rightBody+Z]
-    SET [0x8047], [pixel+Z]
+    SET [0x8046], [rightBody+A]
+    SET [0x8047], [pixel+A]
     SET PC, POP
+
+:theifAnimIndex
+    DAT 0
+
+:theifJumpTimer
+    DAT 0
 
 ; Display splash screen until spacebar pressed
 :splashScreen
-    SET A, 2
-    SET B,  " "
-:splashScreenLoop
-    HWI [keyboardHWaddr]
-    IFE C, 0
+    JSR keyboardRead
+    IFE [keyboardState], 0
     SET PC, POP
-    SET PC, splashScreenLoop
+    SET PC, splashScreen
+
+; Put a 1 in keyboardState is spacebar is down, 0 otherwise
+:keyboardRead
+    SET A, 2
+    SET B, " "
+    HWI [keyboardHWaddr]
+    SET [keyboardState], C
+    SET PC, POP
     
+:keyboardState
+    DAT 0
+
 ; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
