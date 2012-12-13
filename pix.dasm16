@@ -58,7 +58,6 @@
     SET PC, fillScrollBufferLoop
     SET PC, POP         ; Return from subroutine
 
-
 ; Animate everything in the scroll buffer
 :scroll
     SET X, 0            ; Set X to 0, I and J are weirdly in use
@@ -66,14 +65,32 @@
                         ; Increment the animation index
     MOD [scrollPosition], 4
                         ; Mod animation index for 4 frames of animation
-:scrollLoop
+
+    IFN [scrollPosition], 0
+    SET PC, scrollAnimLoop
+                        ; If scrollPosition isn't 0, skip this next bit
+    
+:scrollMoveLoop
+    SET [0x8200+X], [0x8201+X]
+                        ; Move each block of the first row over 1
+    SET [0x8220+X], [0x8221+X]
+                        ; Move each block of the second row over 1
+    ADD X, 1            ; Increment X
+    IFL X, 31           ; IF X is less than 31, keep looping
+    SET PC, scrollMoveLoop
+    SET [0x821f], gapMiddle
+    SET [0x823f], gapMiddle     
+                        ; Add the next block to the end of row
+    SET X, 0            ; Set X to 0 again
+
+:scrollAnimLoop
     SET Y, [0x8200+X]   ; Store the base address of the frame in Y
     ADD Y, [scrollPosition]
                         ; Add current animation index to Y
     SET [0x8080+X], [Y] ; Look up VRAM word and write it to VRAM
     ADD X, 1            ; Increment X
     IFL X, 64           ; Loop while X is less than 64
-    SET PC, scrollLoop  
+    SET PC, scrollAnimLoop  
     SET PC, POP         ; Return from subroutine
 
 :scrollPosition
@@ -132,7 +149,7 @@
     SUB I, [randomMin]  ; Calc difference between bounds
     MOD X, I            ; Reduces to difference between bounds
     ADD X, [randomMin]  ; Increases to make sure x is above lower bound  
-    SET PC, POP         ; Return from subroutin
+    SET PC, POP         ; Return from subroutine
 
 :randomMin            
     DAT 0x0000          ; Lower bound for random number
@@ -160,7 +177,7 @@
     SET [randomMax], 5  ; Max number of gap spaces in a row
     JSR random          ; Call random num generator for size
     SET [size], X       ; Save the new size
-    SET PC, POP         ; Return from subroutin
+    SET PC, POP         ; Return from subroutine
 
 :startingPoint
     DAT 0x0000          ; Starting point for gap
@@ -454,6 +471,12 @@
     DAT 0x332a
     ;DAT 0x0106
     
+:gapMiddle
+    DAT 0x002a
+    DAT 0x002a
+    DAT 0x002a
+    DAT 0x002a
+
 :thiefHead ; (1,0)
     DAT 0x2000 ; 0
     DAT 0x201c ; 1
