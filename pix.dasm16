@@ -105,10 +105,10 @@
                         ; If scrollPosition isn't 0, skip this next bit
     
 :scrollMoveLoop
-    SET [0x8200+X], [0x8201+X]
-                        ; Move each block of the first row over 1
-    SET [0x8220+X], [0x8221+X]
-                        ; Move each block of the second row over 1
+    SET [0x8200+I], [0x8201+I]
+                        ; Move each block of the top row over 1
+    SET [0x8220+I], [0x8221+I]
+                        ; Move each block of the bottom rows over 1
     ADD I, 1            ; Increment X
     IFL I, 31           ; IF X is less than 31, keep looping
     SET PC, scrollMoveLoop
@@ -117,12 +117,17 @@
     SET I, 0            ; Set X to 0 again
 
 :scrollAnimLoop
-    SET X, [0x8200+I]   ; Store the base address of the frame in Y
+    SET X, [0x8200+I]   ; Store the base address of the frame in X
+    SET Y, [0x8220+I]   ; Store the base address of the frame in Y
     ADD X, [scrollPosition]
-                        ; Add current animation index to Y
-    SET [0x8080+I], [X] ; Look up VRAM word and write it to VRAM
-    ADD I, 1            ; Increment X
-    IFL I, 64           ; Loop while X is less than 64
+                        ; Add current animation index to X
+    ADD Y, [scrollPosition]
+    SET [0x8100+I], [X] ; Look up row 1 word and write it to VRAM
+    SET [0x8120+I], [Y] ; Look up row 2 word and write it to VRAM
+    SET [0x8140+I], [Y] ; Look up row 3 word and write it to VRAM
+    SET [0x8160+I], [Y] ; Look up row 4 word and write it to VRAM
+    ADD I, 1            ; Increment I
+    IFL I, 32           ; Loop while I is less than 32
     SET PC, scrollAnimLoop  
     SET PC, POP         ; Return from subroutine
 
@@ -257,32 +262,32 @@
 
 :running
     SET A, [theifAnimIndex]
-    SET [0x8045], [0x1100]
-    SET [0x8026], [0x2200]
-    SET [0x8027], [0x2200]
-    SET [0x8025], [0x2200]
-    SET [0x8047], [0x3300]
+    SET [0x80c5], [0x1100]
+    SET [0x80a6], [0x2200]
+    SET [0x80a7], [0x2200]
+    SET [0x80a5], [0x2200]
+    SET [0x80c7], [0x3300]
 
-    SET [0x8046], [walking_2+A]
+    SET [0x80c6], [walking_2+A]
                         ; Display on 0th frame defined by literal 
-    SET [0x8065], [walking_1+A]
+    SET [0x80e5], [walking_1+A]
                         ; Display on one row down 
-    SET [0x8066], [walking_3+A]
-    SET [0x8067], [pixelWalking+A]
+    SET [0x80e6], [walking_3+A]
+    SET [0x80e7], [pixelWalking+A]
     SET PC, POP
 
 :jumping
     SET A, [thiefJumpIndex]
-    SET [0x8065], [0x1100]  
-    SET [0x8066], [0x1100] 
-    SET [0x8067], [0x1100] 
+    SET [0x80e5], [0x1100]  
+    SET [0x80e6], [0x1100] 
+    SET [0x80e7], [0x1100] 
 
-    SET [0x8026], [jumping_2+A]
-    SET [0x8025], [jumping_0+A]
-    SET [0x8045], [jumping_1+A]
+    SET [0x80a6], [jumping_2+A]
+    SET [0x80a5], [jumping_0+A]
+    SET [0x80c5], [jumping_1+A]
                         ; Display on one row down 
-    SET [0x8046], [jumping_3+A]
-    SET [0x8027], [jumpingPixel+A]
+    SET [0x80c6], [jumping_3+A]
+    SET [0x80a7], [jumpingPixel+A]
     ;ADD [thiefJumpIndex],1
     ;IFE [thiefJumpIndex],3
     
