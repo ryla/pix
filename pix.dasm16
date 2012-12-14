@@ -21,45 +21,20 @@
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
     JSR keyboardRead
-    SET [theifJumpState], [keyboardState]
-
-    ADD [theifJumpTimer], 1
-                        ; Increment jump timer
-    IFE [keyboardState], 0;
-                        ; Reset jump timer if key is up
-    SET [theifJumpTimer], 0
-
-    IFG [theifJumpTimer], 27
-                        ; When air time has reached maximum,
-    SET [theifJumpState], 0
-                        ; Stop jumping
-        
     ADD [mainLoopCounter], 1
-                        ; Increment frame counter per cycle
-    MOD [mainLoopCounter], 10
-                        ; Limit J to be less than 10 to run every 1/6 second
-    
-    IFE [mainLoopCounter], 0            
-    ADD [theifAnimIndex], 1             
-                        ; Increment which frame number 
-    MOD [theifAnimIndex], 3
-                        ; Mod for 3 frames of animation
 
-; Scrolling
     JSR scroll
-
-; Running
-    IFE [theifJumpState], 0
-    JSR running
-
-; Jumping    
-    IFE [theifJumpState], 1
-    JSR jumping
-
+    JSR theifUpdate
     JSR calcScore
 
+    IFE [theifState], 0
+    JSR running
+
+    IFN [theifState], 0
+    JSR jumping
+    
 ; Collision detection
-    IFE [theifJumpState], 0
+    IFE [theifState], 0
     IFE [0x8206], gapMiddle
     IFE [0x8205], gapMiddle
     SET [gameOver], 1
@@ -67,10 +42,87 @@
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
+:theifUpdate
+    IFE [theifState], 3
+    SET PC, theifUpdate2
+    IFE [theifState], 2
+    SET PC, theifUpdate2
+    IFE [theifState], 1
+    SET PC, theifUpdate1
+    
+:theifUpdate0
+    IFE [keyboardState], 1
+    SET [theifState], 2
+
+    SET [theifJumpTimer], 27
+
+    MOD [mainLoopCounter], 10
+    IFN [mainLoopCounter], 0
+    SET PC, POP
+
+    ADD [theifAnimIndex], 1
+    MOD [theifAnimIndex], 3
+    SET PC, POP
+
+:theifUpdate1
+    SET PC, POP
+
+:theifUpdate2
+    IFE [keyboardState], 0
+    SET [theifState], 0
+
+    SUB [theifJumpTimer], 1
+    IFE [theifJumpTimer], 0
+    SET [theifState], 0
+    
+    SET [mainLoopCounter], 0
+
+    SET [theifAnimIndex], 0
+    SET PC, POP
+
+:theifUpdate3
+    SET PC, POP
+
+:running
+    SET A, [theifAnimIndex]
+    SET [0x80c5], [0x1100]
+    SET [0x80a6], [0x2200]
+    SET [0x80a7], [0x2200]
+    SET [0x80a5], [0x2200]
+    SET [0x80c7], [0x3300]
+
+    SET [0x80c6], [walking_2+A]
+                        ; Display on 0th frame defined by literal 
+    SET [0x80e5], [walking_1+A]
+                        ; Display on one row down 
+    SET [0x80e6], [walking_3+A]
+    SET [0x80e7], [pixelWalking+A]
+    SET PC, POP
+
+:jumping
+    SET A, [theifAnimIndex]
+    SET [0x80e5], [0x1100]  
+    SET [0x80e6], [0x1100] 
+    SET [0x80e7], [0x1100] 
+
+    SET [0x80a6], [jumping_2+A]
+    SET [0x80a5], [jumping_0+A]
+    SET [0x80c5], [jumping_1+A]
+                        ; Display on one row down 
+    SET [0x80c6], [jumping_3+A]
+    SET [0x80a7], [jumpingPixel+A]
+    ;ADD [thiefJumpIndex],1
+    ;IFE [thiefJumpIndex],3
+    
+    SET PC, POP
+
+:theifAnimIndex
+    DAT 0
+
 :theifJumpTimer
     DAT 0
 
-:theifJumpState
+:theifState
     DAT 0
 
 :mainLoopCounter
@@ -259,45 +311,6 @@
 
 :blockGeneratorIndex
     DAT 0x0000          ; Which animation block we are at
-
-:running
-    SET A, [theifAnimIndex]
-    SET [0x80c5], [0x1100]
-    SET [0x80a6], [0x2200]
-    SET [0x80a7], [0x2200]
-    SET [0x80a5], [0x2200]
-    SET [0x80c7], [0x3300]
-
-    SET [0x80c6], [walking_2+A]
-                        ; Display on 0th frame defined by literal 
-    SET [0x80e5], [walking_1+A]
-                        ; Display on one row down 
-    SET [0x80e6], [walking_3+A]
-    SET [0x80e7], [pixelWalking+A]
-    SET PC, POP
-
-:jumping
-    SET A, [thiefJumpIndex]
-    SET [0x80e5], [0x1100]  
-    SET [0x80e6], [0x1100] 
-    SET [0x80e7], [0x1100] 
-
-    SET [0x80a6], [jumping_2+A]
-    SET [0x80a5], [jumping_0+A]
-    SET [0x80c5], [jumping_1+A]
-                        ; Display on one row down 
-    SET [0x80c6], [jumping_3+A]
-    SET [0x80a7], [jumpingPixel+A]
-    ;ADD [thiefJumpIndex],1
-    ;IFE [thiefJumpIndex],3
-    
-    SET PC, POP
-
-:theifAnimIndex
-    DAT 0
-
-:thiefJumpIndex
-    DAT 0
 
 ; Display splash screen until spacebar pressed
 :splashScreen
