@@ -26,6 +26,9 @@
 
     JSR stopLooping     ; Stop clock interrupts
     SET [gameOver], 0   ; New game isn't over!
+    SET [randomMax], 7
+    JSR random
+    SET [blockGeneratorCounter] , X
     SET PC, newGame     ; Make a new game
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
@@ -404,7 +407,7 @@
     IFE [blockGeneratorIndex], 2
     SET [randomMax], 20
     IFE [blockGeneratorIndex], 5
-    SET [randomMax], 6
+    SET [randomMax], 7
     JSR random
     SET [blockGeneratorCounter] , X
     SET PC, blockGeneratorAdd
