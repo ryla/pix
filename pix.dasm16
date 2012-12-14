@@ -18,8 +18,13 @@
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
     SET [isfirstGame], 0
+    JSR startFallLoop
 
-    JSR stopMainLoop    ; Stop clock interrupts
+:runFall
+    IFL [fallLoopCounter], 15 ; End fallLoop after enough loops
+    SET PC, runFall     ; Loop while fallLoop runs
+
+    JSR stopLooping     ; Stop clock interrupts
     SET [gameOver], 0   ; New game isn't over!
     SET PC, newGame     ; Make a new game
 
@@ -46,6 +51,27 @@
 
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
+; Displays the falling animation at the end of the game.
+:fallLoop
+    SET A, [fallLoopCounter]
+    SET B, A
+
+    MOD A, 3
+    SET [thiefAnimIndex], 3
+    SUB [thiefAnimIndex], A
+
+    DIV B, 3
+    SHL B, 5
+    SET [fallingOrigin], 0x80a0
+    ADD [fallingOrigin], B
+
+    JSR falling
+
+    ADD [fallLoopCounter], 1
+    RFI 0
+
+:fallLoopCounter
+    DAT 0
 
 :thiefUpdate
     IFE [thiefState], 3
@@ -53,7 +79,7 @@
     IFE [thiefState], 2
     SET PC, thiefUpdate2
     IFE [thiefState], 1
-    SET PC, thiefUpdate1
+    SET PC, thiefUpdate1 ; Select a state or fall to state 0
     
 :thiefUpdate0
     IFE [keyboardState], 1
@@ -511,15 +537,22 @@
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
+; Starts an interrupt-driven loop for the falling animation
+:startFallLoop
+    IAS fallLoop
+    SET [fallLoopCounter], 0
+    SET PC, setupLooping
+
 ; Setup mainLoop to be triggered once every clock tick
 :startMainLoop
     IAS mainLoop        ; Set up mainLoop as the interrupt handler
+:setupLooping
     SET A, 2            ; Put clock into set interrupt mode
     SET B, 1            ; Set clock interrupt message to 1
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
-:stopMainLoop
+:stopLooping
     SET A, 2            ; Put clock into set interrupt mode
     SET B, 0            ; Turn clock interrupts off
     HWI [clockHWaddr]   ; Send settings to the clock
