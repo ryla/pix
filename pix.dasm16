@@ -44,7 +44,7 @@
 
 :thiefUpdate
     IFE [thiefState], 3
-    SET PC, thiefUpdate2
+    SET PC, thiefUpdate3
     IFE [thiefState], 2
     SET PC, thiefUpdate2
     IFE [thiefState], 1
@@ -53,36 +53,57 @@
 :thiefUpdate0
     IFE [keyboardState], 1
     IFE [thiefJumpTimer], 27
-    SET [thiefState], 2
-
+    SET [thiefState], 1 ; Move to state 1 if spacebar is down and was up or
+                        ; still a lot of time left on the jump timer
+    IFE [keyboardState], 1
+    IFE [thiefJumpTimer], 27
+    SET [thiefAnimIndex], 0 ; Reset anim index if moving to state 1. Couldn't
+                        ; think of a better way to write this IF
     IFE [keyboardState], 0
-    SET [thiefJumpTimer], 27
-
+    SET [thiefJumpTimer], 27 ; Reset the jump timer if on the ground (this 
+                        ; state) and spacebar is up
     MOD [mainLoopCounter], 10
     IFN [mainLoopCounter], 0
-    SET PC, POP
+    SET PC, POP         ; Return if we're still waiting for the next frame
 
-    ADD [thiefAnimIndex], 1
-    MOD [thiefAnimIndex], 3
+    ADD [thiefAnimIndex], 1 ; Move to the next running animation
+    MOD [thiefAnimIndex], 3 ; Loop animations
     SET PC, POP
 
 :thiefUpdate1
+    IFE [keyboardState], 0
+    SET [thiefState], 3 ; Fall if space released
+
+    MOD [mainLoopCounter], 2
+    IFN [mainLoopCounter], 0
+    SET PC, POP         ; Return if we're still waiting for the next frame
+
+    ADD [thiefAnimIndex], 1
+    IFE [thiefAnimIndex], 5
+    SET [thiefState], 2
     SET PC, POP
 
 :thiefUpdate2
     IFE [keyboardState], 0
-    SET [thiefState], 0
+    SET [thiefState], 3 ; Fall if space released
 
-    SUB [thiefJumpTimer], 1
+    SUB [thiefJumpTimer], 1 ; Take time off the jump timer
     IFE [thiefJumpTimer], 0
-    SET [thiefState], 0
+    SET [thiefState], 3 ; Fall if timer expired
     
-    SET [mainLoopCounter], 0
+    SET [mainLoopCounter], 0 ; Keep main counter reset
 
-    SET [thiefAnimIndex], 0
+    SET [thiefAnimIndex], 5 ; Stay at frame 5
     SET PC, POP
 
 :thiefUpdate3
+    MOD [mainLoopCounter], 3
+    IFN [mainLoopCounter], 0
+    SET PC, POP         ; Return if we're still waiting for the next frame
+
+    SUB [thiefAnimIndex], 1
+    IFE [thiefAnimIndex], 0
+    SET [thiefState], 0
     SET PC, POP
 
 :running
