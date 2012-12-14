@@ -76,6 +76,9 @@
     SET PC, POP
 
 :thiefUpdate1
+    IFE [keyboardState], 0
+    SET [thiefState], 3 ; Fall if space released
+
     MOD [mainLoopCounter], 2
     IFN [mainLoopCounter], 0
     SET PC, POP         ; Return if we're still waiting for the next frame
@@ -99,7 +102,7 @@
     SET PC, POP
 
 :thiefUpdate3
-    MOD [mainLoopCounter], 3
+    MOD [mainLoopCounter], 1
     IFN [mainLoopCounter], 0
     SET PC, POP         ; Return if we're still waiting for the next frame
 
@@ -115,6 +118,9 @@
     SET [0x80a7], [0x2200]
     SET [0x80a5], [0x2200]
     SET [0x80c7], [0x3300]
+    SET [0x8086], [0x3300]
+    SET [0x8085], [0x3300]
+    SET [0x8087], [0x3300]
 
     SET [0x80c6], [walking_2+A]
                         ; Display on 0th frame defined by literal 
@@ -125,17 +131,56 @@
     SET PC, POP
 
 :jumping
-    SET A, [thiefAnimIndex]
+    SET A, [thiefAnimIndex]     ;0-6 for 6 frames
     SET [0x80e5], [0x1100]  
     SET [0x80e6], [0x1100] 
     SET [0x80e7], [0x1100] 
 
-    SET [0x80a6], [jumping_2+A]
-    SET [0x80a5], [jumping_0+A]
-    SET [0x80c5], [jumping_1+A]
-                        ; Display on one row down 
-    SET [0x80c6], [jumping_3+A]
+    IFG [thiefAnimIndex], 2
+    SUB A, 3
+
+    IFL [thiefAnimIndex], 4
+    SET [0x80a6], [jumping_2+A] ;head
+    IFG [thiefAnimIndex], 3
+    SET [0x8086], [jumping_2+A] ;head
+    IFL [thiefAnimIndex], 4
+    SET [0x8086], [0x1100] 
+
+    IFL [thiefAnimIndex], 4
+    SET [0x80a5], [jumping_0+A] ;left hand
+    IFG [thiefAnimIndex], 3
+    SET [0x8085], [jumping_0+A] ;left hand
+    IFL [thiefAnimIndex], 4
+    SET [0x8085], [0x1100] 
+    IFG [thiefAnimIndex], 3
+    SET [0x80a5], [0x1100] 
+
+
+    IFL [thiefAnimIndex], 4
+    SET [0x80c5], [jumping_1+A] ;left body
+    IFG [thiefAnimIndex], 3
+    SET [0x80a5], [jumping_1+A] ;left body
+    IFL [thiefAnimIndex], 4
+    SET [0x80a5], [0x1100] ;left body
+    IFG [thiefAnimIndex], 3
+    SET [0x80c5], [0x1100] ;left body
+    
+    IFL [thiefAnimIndex], 4
+    SET [0x80c6], [jumping_3+A] ;right body
+    IFG [thiefAnimIndex], 3
+    SET [0x80a6], [jumping_3+A] ;right body
+    IFG [thiefAnimIndex], 3         ;clear
+    SET [0x80c6], [0x1100] ;right body
+       
+    IFL [thiefAnimIndex], 4
     SET [0x80a7], [jumpingPixel+A]
+    IFG [thiefAnimIndex], 3
+    SET [0x8087], [jumpingPixel+A]              
+    IFL [thiefAnimIndex], 4
+    SET [0x8087], [0x1100]
+    IFG [thiefAnimIndex], 3
+    SET [0x80a7], [0x1100] 
+    
     ;ADD [thiefJumpIndex],1
     ;IFE [thiefJumpIndex],3
     
@@ -734,22 +779,22 @@ DAT 0xf8f8, 0xf8f8 ; 127 = 0xb 11
     DAT 0x0206 ; (4, 1)
     DAT 0x0208 ; (7, 1)
 
-:jumping_0
+:jumping_0      ;left hand
     DAT 0x0210 ; (18, 0)
     DAT 0x0214 ; (21, 0)
     DAT 0x0218 ; (24, 0)
 
-:jumping_1
+:jumping_1      ;left body
     DAT 0x0211 ; (18, 1)
     DAT 0x0215 ; (21, 1)
     DAT 0x0219 ; (24, 1)
 
-:jumping_2
+:jumping_2      ;head
     DAT 0x0212 ; (19, 0)
     DAT 0x0216 ; (22, 0)
     DAT 0x021a ; (25, 0)
 
-:jumping_3
+:jumping_3      ;right body
     DAT 0x0213 ; (19, 1)
     DAT 0x0217 ; (22, 1)
     DAT 0x021b ; (25, 1)
