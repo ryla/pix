@@ -127,61 +127,71 @@
     SET [0x80e7], [pixelWalking+A]
     SET PC, POP
 
+:falling
+    SET B, [fallingOrigin]
+    SET PC, jumpingMain
+
 :jumping
+    SET B, 0x8080
+
+:jumpingMain
     SET A, [thiefAnimIndex]     ;0-6 for 6 frames
-    SET [0x80e5], [0x1100]  
-    SET [0x80e6], [0x1100] 
-    SET [0x80e7], [0x1100] 
+    SET [0x65+B], [0x1100]  
+    SET [0x66+B], [0x1100] 
+    SET [0x67+B], [0x1100] 
 
     IFG [thiefAnimIndex], 2
     SUB A, 3
 
     IFL [thiefAnimIndex], 4
-    SET [0x80a6], [jumping_2+A] ;head
+    SET [0x26+B], [jumping_2+A] ;head
     IFG [thiefAnimIndex], 3
-    SET [0x8086], [jumping_2+A] ;head
+    SET [0x06+B], [jumping_2+A] ;head
     IFL [thiefAnimIndex], 4
-    SET [0x8086], [0x1100] 
+    SET [0x06+B], [0x1100] 
 
     IFL [thiefAnimIndex], 4
-    SET [0x80a5], [jumping_0+A] ;left hand
+    SET [0x25+B], [jumping_0+A] ;left hand
     IFG [thiefAnimIndex], 3
-    SET [0x8085], [jumping_0+A] ;left hand
+    SET [0x05+B], [jumping_0+A] ;left hand
     IFL [thiefAnimIndex], 4
-    SET [0x8085], [0x1100] 
+    SET [0x05+B], [0x1100] 
     IFG [thiefAnimIndex], 3
-    SET [0x80a5], [0x1100] 
+    SET [0x25+B], [0x1100] 
 
 
     IFL [thiefAnimIndex], 4
-    SET [0x80c5], [jumping_1+A] ;left body
+    SET [0x45+B], [jumping_1+A] ;left body
     IFG [thiefAnimIndex], 3
-    SET [0x80a5], [jumping_1+A] ;left body
+    SET [0x25+B], [jumping_1+A] ;left body
     IFL [thiefAnimIndex], 4
-    SET [0x80a5], [0x1100] ;left body
+    SET [0x25+B], [0x1100] ;left body
     IFG [thiefAnimIndex], 3
-    SET [0x80c5], [0x1100] ;left body
+    SET [0x45+B], [0x1100] ;left body
     
     IFL [thiefAnimIndex], 4
-    SET [0x80c6], [jumping_3+A] ;right body
+    SET [0x46+B], [jumping_3+A] ;right body
     IFG [thiefAnimIndex], 3
-    SET [0x80a6], [jumping_3+A] ;right body
+    SET [0x26+B], [jumping_3+A] ;right body
     IFG [thiefAnimIndex], 3         ;clear
-    SET [0x80c6], [0x1100] ;right body
+    SET [0x46+B], [0x1100] ;right body
        
     IFL [thiefAnimIndex], 4
-    SET [0x80a7], [jumpingPixel+A]
+    SET [0x27+B], [jumpingPixel+A]
     IFG [thiefAnimIndex], 3
-    SET [0x8087], [jumpingPixel+A]              
+    SET [0x07+B], [jumpingPixel+A]              
     IFL [thiefAnimIndex], 4
-    SET [0x8087], [0x1100]
+    SET [0x07+B], [0x1100]
     IFG [thiefAnimIndex], 3
-    SET [0x80a7], [0x1100] 
+    SET [0x27+B], [0x1100] 
     
     ;ADD [thiefJumpIndex],1
     ;IFE [thiefJumpIndex],3
     
     SET PC, POP
+
+:fallingOrigin
+    DAT 0
 
 :thiefAnimIndex
     DAT 0
