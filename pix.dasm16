@@ -57,15 +57,15 @@
     
 :thiefUpdate0
     IFE [keyboardState], 1
-    IFE [thiefJumpTimer], 27
+    IFE [thiefJumpTimer], 20
     SET [thiefState], 1 ; Move to state 1 if spacebar is down and was up or
                         ; still a lot of time left on the jump timer
     IFE [keyboardState], 1
-    IFE [thiefJumpTimer], 27
+    IFE [thiefJumpTimer], 20
     SET [thiefAnimIndex], 0 ; Reset anim index if moving to state 1. Couldn't
                         ; think of a better way to write this IF
     IFE [keyboardState], 0
-    SET [thiefJumpTimer], 27 ; Reset the jump timer if on the ground (this 
+    SET [thiefJumpTimer], 20 ; Reset the jump timer if on the ground (this 
                         ; state) and spacebar is up
     MOD [mainLoopCounter], 10
     IFN [mainLoopCounter], 0
@@ -76,9 +76,6 @@
     SET PC, POP
 
 :thiefUpdate1
-    IFE [keyboardState], 0
-    SET [thiefState], 3 ; Fall if space released
-
     MOD [mainLoopCounter], 2
     IFN [mainLoopCounter], 0
     SET PC, POP         ; Return if we're still waiting for the next frame
