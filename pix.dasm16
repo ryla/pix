@@ -52,8 +52,10 @@
     
 :thiefUpdate0
     IFE [keyboardState], 1
+    IFE [thiefJumpTimer], 27
     SET [thiefState], 2
 
+    IFE [keyboardState], 0
     SET [thiefJumpTimer], 27
 
     MOD [mainLoopCounter], 10
