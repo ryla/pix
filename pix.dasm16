@@ -1,6 +1,10 @@
     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
-    JSR setupClock      ; Set up the clock, so mainLoop runs.
+    JSR setupClock      ; Set up the clock to tick at 1/60s
+    JSR fillScrollBuffer ; Fill the scroll buffer for the start of the game
+    JSR splashScreen    ; Display splash screen and wait for spacebar
+    JSR setRandomSeed   ; Set the random seed from the clock
+    JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
 
 :infiniteStall
     SET PC, infiniteStall
@@ -9,10 +13,162 @@
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
+    JSR keyboardRead
+    SET [theifJumpState], [keyboardState]
+
+    ADD [theifJumpTimer], 1
+                        ; Increment jump timer
+    IFE [keyboardState], 0;
+                        ; Reset jump timer if key is up
+    SET [theifJumpTimer], 0
+
+    IFG [theifJumpTimer], 20
+                        ; When air time has reached maximum,
+    SET [theifJumpState], 0
+                        ; Stop jumping
+        
+    ADD [mainLoopCounter], 1
+                        ; Increment frame counter per cycle
+    MOD [mainLoopCounter], 10
+                        ; Limit J to be less than 10 to run every 1/6 second
+    
+    IFE [mainLoopCounter], 0            
+    ADD [theifAnimIndex], 1             
+                        ; Increment which frame number 
+    MOD [theifAnimIndex], 3
+                        ; Mod for 3 frames of animation
+
+; Scrolling
+    JSR scroll
+
+; Running
+    IFE [theifJumpState], 0
+    JSR running
+
+; Jumping    
+    IFE [theifJumpState], 1
+    JSR jumping
+
+    JSR calcScore
+
+; Collision detection
+    IFE [theifJumpState], 0
+    IFE [0x8206], gapMiddle
+    IFE [0x8205], gapMiddle
+    SET PC, gameOver
+
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
-; Random number generator (no idea how it works)
+:theifJumpTimer
+    DAT 0
+
+:theifJumpState
+    DAT 0
+
+:mainLoopCounter
+    DAT 0
+
+; End game and stop sending clock interrupts
+:gameOver
+    SET A, 2            ; Put clock into set interrupt mode
+    SET B, 0            ; Set clock interrupt message to 1 (off)
+    HWI [clockHWaddr]   ; Send settings to the clock
+    SET SP, 0           ; Clear the stack
+    SET PC, infiniteStall
+
+; Initialize the scroll buffer (at 0x8200) with addresses of tile indices
+:fillScrollBuffer
+    SET I, 0            ; Start counting from zero
+:fillScrollBufferLoop
+    SET [0x8200+I], parapetMiddle
+                        ; Draw parapets on top row
+    SET [0x8220+I], buildingSolidMiddle
+                        ; Draw buildings on bottom row
+    ADD I, 1            ; Increment I
+    IFL I, 32           ; Loop if I less than 32
+    SET PC, fillScrollBufferLoop
+    SET PC, POP         ; Return from subroutine
+
+; Animate everything in the scroll buffer
+:scroll
+    SET X, 0            ; Set X to 0, I and J are weirdly in use
+    ADD [scrollPosition], 1
+                        ; Increment the animation index
+    MOD [scrollPosition], 4
+                        ; Mod animation index for 4 frames of animation
+
+    IFN [scrollPosition], 0
+    SET PC, scrollAnimLoop
+                        ; If scrollPosition isn't 0, skip this next bit
+    
+:scrollMoveLoop
+    SET [0x8200+X], [0x8201+X]
+                        ; Move each block of the first row over 1
+    SET [0x8220+X], [0x8221+X]
+                        ; Move each block of the second row over 1
+    ADD X, 1            ; Increment X
+    IFL X, 31           ; IF X is less than 31, keep looping
+    SET PC, scrollMoveLoop
+    SET [0x821f], gapMiddle
+    SET [0x823f], gapMiddle     
+                        ; Add the next block to the end of row
+    SET X, 0            ; Set X to 0 again
+
+:scrollAnimLoop
+    SET Y, [0x8200+X]   ; Store the base address of the frame in Y
+    ADD Y, [scrollPosition]
+                        ; Add current animation index to Y
+    SET [0x8080+X], [Y] ; Look up VRAM word and write it to VRAM
+    ADD X, 1            ; Increment X
+    IFL X, 64           ; Loop while X is less than 64
+    SET PC, scrollAnimLoop  
+    SET PC, POP         ; Return from subroutine
+
+:scrollPosition
+    DAT 0
+
+; Use the clock to calculate the users score
+:calcScore
+    set A, 1            ; Store ticks elapsed since clock reset in C
+    HWI [clockHWaddr]   ; Send interrupt to clock
+    DIV C, 5
+    SET [currentScore], C 
+                        ; Set the current score to the clock value
+    JSR displayScore    ; Display the calculated digits
+    SET PC, POP         ; Return from subroutine
+
+; Display the players current score
+:displayScore
+    SET X, 0x801f       ; Score display fist digit location
+    SET B, 1            ; Digit to display
+:displayScoreLoop
+    SET Y, 0x042e       ; Initialize digits to zero
+    
+    SET C, [currentScore] ; Set C to the players Current Score
+    DIV C, B            ; Divide by B to "shift" C into the right cut off position
+    MOD C, 10           ; Mod by 10 to "cut off" the desired digit
+    ADD Y, C            ; Add the score dgit value to the display value
+    SET [X], Y          ; Set X to the display digit
+    SUB X, 1            ; Move over by one space
+    MUL B, 10           ; Move to next digit that needs to be displayed
+    IFG X, 0x8019       ; If we are not at the last display location
+    SET PC, displayScoreLoop ; Loop back to top
+    SET PC, POP         ; Return from subroutine
+    
+:currentScore            
+    DAT 0x0000          ; Player's current score
+
+; Get clock value from start screen to make random generatior
+; As random as possible
+:setRandomSeed        
+    SET A, 1            ; Store number of ticks elapsed since last 
+                        ; call to 0 in C register
+    HWI [clockHWaddr]   ; Send interrupt to clock
+    SET [randomSeed], C ; Save clock value to randomSeed
+    SET PC, POP         ; Return from subroutine
+
+; Random number generator
 ; code from lowey2002 
 ; http://www.0x10cforum.com/forum/m/4932880/viewthread/2732760-pseudorandom-generator
 :random
@@ -25,7 +181,7 @@
     SUB I, [randomMin]  ; Calc difference between bounds
     MOD X, I            ; Reduces to difference between bounds
     ADD X, [randomMin]  ; Increases to make sure x is above lower bound  
-    SET PC, POP         ; Return from subroutin
+    SET PC, POP         ; Return from subroutine
 
 :randomMin            
     DAT 0x0000          ; Lower bound for random number
@@ -36,12 +192,168 @@
 :randomSeed              
     DAT 0x3e42          ; Seed for random number
 
-; Configures the clock to create an interrupt every 1/60 second and sets
-; up the interrupt handler for it.
+; Feeds random number generator to get gap size, and starting point
+:blockCreator    
+    ADD [size], [startingPoint] 
+                        ; Add the size and the starting point of the previous gap together
+    ADD [size], 5       ; Add three to this number because we do not want gaps that are too close together
+    SET [randomMin], [size]
+                        ; Set the min distance to this number
+    ADD [size] , 40     ; Add 10 more to get a new max
+    SET [randomMax], [size]
+                        ; Set max to this number
+    JSR random          ; Call random num gen for starting
+    SET [startingPoint], X
+                        ; Save the new starting point
+    SET [randomMin], 1  ; Min Number of gap spaces in a row
+    SET [randomMax], 5  ; Max number of gap spaces in a row
+    JSR random          ; Call random num generator for size
+    SET [size], X       ; Save the new size
+    SET PC, POP         ; Return from subroutine
+
+:startingPoint
+    DAT 0x0000          ; Starting point for gap
+
+:size
+    DAT 0x0000          ; Size for gap
+
+:running
+    SET A, [theifAnimIndex]
+    SET [0x8045], [0x1100]
+    SET [0x8026], [0x2200]
+    SET [0x8027], [0x2200]
+    SET [0x8025], [0x2200]
+    SET [0x8047], [0x3300]
+
+    SET [0x8046], [walking_2+A]
+                        ; Display on 0th frame defined by literal 
+    SET [0x8065], [walking_1+A]
+                        ; Display on one row down 
+    SET [0x8066], [walking_3+A]
+    SET [0x8067], [pixelWalking+A]
+    SET PC, POP
+
+:jumping
+    SET A, [thiefJumpIndex]
+    SET [0x8065], [0x1100]  
+    SET [0x8066], [0x1100] 
+    SET [0x8067], [0x1100] 
+
+    SET [0x8026], [jumping_2+A]
+    SET [0x8025], [jumping_0+A]
+    SET [0x8045], [jumping_1+A]
+                        ; Display on one row down 
+    SET [0x8046], [jumping_3+A]
+    SET [0x8027], [jumpingPixel+A]
+    ;ADD [thiefJumpIndex],1
+    ;IFE [thiefJumpIndex],3
+    
+    SET PC, POP
+
+:theifAnimIndex
+    DAT 0
+
+:thiefJumpIndex
+    DAT 0
+
+; Display splash screen until spacebar pressed
+:splashScreen
+    SET [0x80e4], 0x0440 ; (4, 7) Loc 228=0x0e4; char_idx: 64=0x40
+    SET [0x8104], 0x0441 ; (4, 8) Loc 260=0x104; char_idx: 65=0x41
+    SET [0x80e5], 0x0442 ; (5, 7) Loc 229=0x0e5; char_idx: 66=0x42
+    SET [0x8105], 0x0443 ; (5, 8) Loc 261=0x105; char_idx: 67=0x43
+    SET [0x80e6], 0x0444 ; (6, 7) Loc 230=0x0e6; char_idx: 68=0x44
+    SET [0x8106], 0x0445 ; (6, 8) Loc 262=0x106; char_idx: 69=0x45
+    SET [0x80e7], 0x0446 ; (7, 7) Loc 231=0x0e7; char_idx: 70=0x46
+    SET [0x8107], 0x0447 ; (7, 8) Loc 263=0x107; char_idx: 71=0x47
+    SET [0x80e8], 0x0446 ; (8, 7) Loc 232=0x0e8; char_idx: 70=0x46
+    SET [0x8108], 0x0448 ; (8, 8) Loc 264=0x108; char_idx: 72=0x48
+    SET [0x80e9], 0x0446 ; (9, 7) Loc 233=0x0e9; char_idx: 70=0x46
+    SET [0x8109], 0x0448 ; (9, 8) Loc 265=0x109; char_idx: 72=0x48
+    SET [0x806b], 0x0449 ; (11, 3) Loc 107=0x06b; char_idx: 73=0x49
+    SET [0x808b], 0x044a ; (11, 4) Loc 139=0x08b; char_idx: 74=0x4a
+    SET [0x80ab], 0x044b ; (11, 5) Loc 171=0x0ab; char_idx: 75=0x4b
+    SET [0x806c], 0x044c ; (12, 3) Loc 108=0x06c; char_idx: 76=0x4c
+    SET [0x808c], 0x044d ; (12, 4) Loc 140=0x08c; char_idx: 77=0x4d
+    SET [0x80ec], 0x044e ; (12, 7) Loc 236=0x0ec; char_idx: 78=0x4e
+    SET [0x810c], 0x044f ; (12, 8) Loc 268=0x10c; char_idx: 79=0x4f
+    SET [0x806d], 0x044c ; (13, 3) Loc 109=0x06d; char_idx: 76=0x4c
+    SET [0x808d], 0x0450 ; (13, 4) Loc 141=0x08d; char_idx: 80=0x50
+    SET [0x80ed], 0x0451 ; (13, 7) Loc 237=0x0ed; char_idx: 81=0x51
+    SET [0x810d], 0x0452 ; (13, 8) Loc 269=0x10d; char_idx: 82=0x52
+    SET [0x806e], 0x0453 ; (14, 3) Loc 110=0x06e; char_idx: 83=0x53
+    SET [0x808e], 0x0454 ; (14, 4) Loc 142=0x08e; char_idx: 84=0x54
+    SET [0x80ee], 0x044e ; (14, 7) Loc 238=0x0ee; char_idx: 78=0x4e
+    SET [0x810e], 0x0455 ; (14, 8) Loc 270=0x10e; char_idx: 85=0x55
+    SET [0x808f], 0x0456 ; (15, 4) Loc 143=0x08f; char_idx: 86=0x56
+    SET [0x80af], 0x0457 ; (15, 5) Loc 175=0x0af; char_idx: 87=0x57
+    SET [0x80ef], 0x044e ; (15, 7) Loc 239=0x0ef; char_idx: 78=0x4e
+    SET [0x810f], 0x0458 ; (15, 8) Loc 271=0x10f; char_idx: 88=0x58
+    SET [0x8090], 0x0459 ; (16, 4) Loc 144=0x090; char_idx: 89=0x59
+    SET [0x80b0], 0x045a ; (16, 5) Loc 176=0x0b0; char_idx: 90=0x5a
+    SET [0x80f0], 0x045b ; (16, 7) Loc 240=0x0f0; char_idx: 91=0x5b
+    SET [0x8110], 0x045c ; (16, 8) Loc 272=0x110; char_idx: 92=0x5c
+    SET [0x8091], 0x045d ; (17, 4) Loc 145=0x091; char_idx: 93=0x5d
+    SET [0x80b1], 0x045e ; (17, 5) Loc 177=0x0b1; char_idx: 94=0x5e
+    SET [0x80f1], 0x045f ; (17, 7) Loc 241=0x0f1; char_idx: 95=0x5f
+    SET [0x8111], 0x0460 ; (17, 8) Loc 273=0x111; char_idx: 96=0x60
+    SET [0x8092], 0x0461 ; (18, 4) Loc 146=0x092; char_idx: 97=0x61
+    SET [0x80b2], 0x0462 ; (18, 5) Loc 178=0x0b2; char_idx: 98=0x62
+    SET [0x8093], 0x0463 ; (19, 4) Loc 147=0x093; char_idx: 99=0x63
+    SET [0x80b3], 0x0464 ; (19, 5) Loc 179=0x0b3; char_idx: 100=0x64
+    SET [0x80f3], 0x0465 ; (19, 7) Loc 243=0x0f3; char_idx: 101=0x65
+    SET [0x8113], 0x0466 ; (19, 8) Loc 275=0x113; char_idx: 102=0x66
+    SET [0x80b4], 0x0167 ; (20, 5) Loc 180=0x0b4; char_idx: 103=0x67
+    SET [0x80f4], 0x0465 ; (20, 7) Loc 244=0x0f4; char_idx: 101=0x65
+    SET [0x8114], 0x0468 ; (20, 8) Loc 276=0x114; char_idx: 104=0x68
+    SET [0x80f6], 0x044e ; (22, 7) Loc 246=0x0f6; char_idx: 78=0x4e
+    SET [0x8116], 0x044f ; (22, 8) Loc 278=0x116; char_idx: 79=0x4f
+    SET [0x80f7], 0x045b ; (23, 7) Loc 247=0x0f7; char_idx: 91=0x5b
+    SET [0x8117], 0x0469 ; (23, 8) Loc 279=0x117; char_idx: 105=0x69
+    SET [0x80f8], 0x044e ; (24, 7) Loc 248=0x0f8; char_idx: 78=0x4e
+    SET [0x8118], 0x046a ; (24, 8) Loc 280=0x118; char_idx: 106=0x6a
+    SET [0x80f9], 0x0446 ; (25, 7) Loc 249=0x0f9; char_idx: 70=0x46
+    SET [0x8119], 0x046b ; (25, 8) Loc 281=0x119; char_idx: 107=0x6b
+    SET [0x80fa], 0x044e ; (26, 7) Loc 250=0x0fa; char_idx: 78=0x4e
+    SET [0x811a], 0x046c ; (26, 8) Loc 282=0x11a; char_idx: 108=0x6c
+    SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
+
+    JSR keyboardRead
+    IFE [keyboardState], 0
+    JSR clearScreen
+    IFE [keyboardState], 0
+    SET PC, POP
+    SET PC, splashScreen
+
+; Put a 1 in keyboardState is spacebar is down, 0 otherwise
+:keyboardRead
+    SET A, 2
+    SET B, " "
+    HWI [keyboardHWaddr]
+    SET [keyboardState], C
+    SET PC, POP
+    
+:keyboardState
+    DAT 0
+
+:clearScreen
+    SET X,0x7fff 
+    :clearLoop
+    ADD X,1
+    SET [X],0x002a
+    IFG X,0x817f
+    SET PC,POP
+    JSR clearLoop
+    
+; Configures the clock to tick at 1/60s
 :setupClock
     SET A, 0            ; Put clock into set frequency mode
     SET B, 1            ; Set clock frequency to 1/60s
     HWI [clockHWaddr]   ; Send settings to the clock
+    SET PC, POP         ; Return from subroutine
+
+; Setup mainLoop to be triggered once every clock tick
+:setupMainLoop
     IAS mainLoop        ; Set up mainLoop as the interrupt handler
     SET A, 2            ; Put clock into set interrupt mode
     SET B, 1            ; Set clock interrupt message to 1
@@ -51,7 +363,7 @@
 ; Configures the monitor and the VRAM for the monitor. Note: time consuming
 :setupMonitor
     SET A, 0            ; Put monitor into set VRAM mode
-    SET B, monitorVRAM  ; Set the start of the monitor's VRAM mapping
+    SET B, 0x8000       ; Set the start of the monitor's VRAM mapping
     HWI [monitorHWaddr] ; Send settings to monitor. The monitor will still
                         ; respond to interrupts while it's powering on
     SET A, 1            ; Put monitor into set font mode
@@ -112,27 +424,307 @@
 
 ; Definitions for the monitor's color palette
 :monitorPalette
-    DAT 0x0000          ; Black
-    DAT 0x000a          ; Dark Blue
-    DAT 0x00a0          ; Dark Green
-    DAT 0x00aa          ; Teal
-    DAT 0xa000          ; Dark Red
-    DAT 0x0a0a          ; Purple
-    DAT 0x0a50          ; Dark Orange
-    DAT 0x0aaa          ; Light Gray
-    DAT 0x0555          ; Dark Gray
-    DAT 0x055f          ; Light Blue
-    DAT 0x05f5          ; Light Green
-    DAT 0x05ff          ; Aqua
-    DAT 0x0f55          ; Light Red
-    DAT 0x0f5f          ; Violet
-    DAT 0x0ff5          ; Yellow
-    DAT 0x0fff          ; White
+    ; Color 0 (black)
+    DAT 0x0000
+    ; Color 1 (red)
+    DAT 0x0e33
+    ; Color 2 (person gray)
+    DAT 0x0777
+    ; Color 3 (building gray)
+    DAT 0x0ccc
+    ; Color 4 (number white)
+    DAT 0x0fff
 
-; Definitions for the monitor's font
 :monitorFont
-    DAT 0, 0
+;THIEF 0-28
+    DAT 0xffff, 0xffff ; 0 = 0x0
+    DAT 0xffff, 0x73bd ; 1 = 0x1
+    DAT 0x5f5f, 0xbfff ; 2 = 0x2
+    DAT 0xc08d, 0x7dfd ; 3 = 0x3
+    DAT 0xffff, 0x7b15 ; 4 = 0x4
+    DAT 0xbfbf, 0x7fff ; 5 = 0x5
+    DAT 0xc03a, 0xf7f7 ; 6 = 0x6
+    DAT 0xffff, 0xff1d ; 7 = 0x7
+    DAT 0xc035, 0xfbfd ; 8 = 0x8
+    DAT 0xffff, 0x6f37 ; 9 = 0x9
+    DAT 0x7f7f, 0xffff ; 10 = 0xa
+    DAT 0x8135, 0xeeef ; 11 = 0xb
+    DAT 0xffff, 0x771b ; 12 = 0xc
+    DAT 0xc03a, 0xf7ef ; 13 = 0xd
+    DAT 0xffff, 0xfe1d ; 14 = 0xe
+    DAT 0xe01d, 0xfbfd ; 15 = 0xf
+    DAT 0xffff, 0x7fff ; 16 = 0x10
+    DAT 0xffff, 0xff8e ; 17 = 0x11
+    DAT 0x2faf, 0xdfff ; 18 = 0x12
+    DAT 0xf08e, 0xfdfe ; 19 = 0x13
+    DAT 0xffff, 0xbf7f ; 20 = 0x14
+    DAT 0xffff, 0xdfe7 ; 21 = 0x15
+    DAT 0x1757, 0xef7f ; 22 = 0x16
+    DAT 0xf8e7, 0xdeff ; 23 = 0x17
+    DAT 0xffff, 0xdfbf ; 24 = 0x18
+    DAT 0xffff, 0xffe3 ; 25 = 0x19
+    DAT 0x0bab, 0x77bf ; 26 = 0x1a
+    DAT 0xfce3, 0xffff ; 27 = 0x1b
+    DAT 0x0000,0x0000 ;padding
+  ;BUILDING
+    ; Font Char 29
+        DAT 0x0000, 0x6202
+    ; Font Char 30
+        DAT 0x6200, 0x0062
+    ; Font Char 31
+        DAT 0x07fd, 0x9dff
+    ; Font Char 32
+        DAT 0x00ff, 0xffff
+    ; Font Char 33
+        DAT 0xfff8, 0x0262
+    ; Font Char 34
+        DAT 0xffff, 0xffff
+    ; Font Char 35
+        DAT 0x0062, 0x6200
+    ; Font Char 36
+        DAT 0xffff, 0xff00
+    ; Font Char 37
+        DAT 0xff00, 0x0000
+    ; Font Char 38
+        DAT 0x0062, 0x02f8
+    ; Font Char 39
+        DAT 0x02f8, 0xffff
+    ; Font Char 40
+        DAT 0xffff, 0xf802
+    ; Font Char 41
+        DAT 0x0000, 0x00ff
+    ; Font Char 42
+        DAT 0x0000, 0x0000
+    ; Font Char 43
+        DAT 0x0000, 0x6262
+    ; Font Char 44
+        DAT 0xffff, 0x0000
+    ; Font Char 45
+        DAT 0xf8ff, 0xffff
 
-:monitorVRAM
-    DAT 0               ; Monitor VRAM follows this, anything in the next
-                        ; 384 words will be displayed on the monitor
+    ;NUMBERS
+    ; Font Char 46
+        DAT 0x837d, 0x83ff ; 0
+    ; Font Char 47
+        DAT 0x7b01, 0x7fff ; 1
+    ; Font Char 48
+        DAT 0x3b4d, 0x73ff ; 2
+    ; Font Char 49
+        DAT 0xbb6d, 0x93ff ; 3
+    ; Font Char 50
+        DAT 0xe1ef, 0x01ff ; 4
+    ; Font Char 51
+        DAT 0xb175, 0x8dff ; 5
+    ; Font Char 52
+        DAT 0x836d, 0x9bff ; 6
+    ; Font Char 53
+        DAT 0x3dcd, 0xf1ff ; 7
+    ; Font Char 54
+        DAT 0x936d, 0x93ff ; 8
+    ; Font Char 55
+        DAT 0xb36d, 0x83ff ; 9
+
+    ;other turret that we forgot
+
+ ; Font Char 56
+    DAT 0x0262, 0x0000
+; Font Char 57
+    DAT 0xffff, 0xffff
+; Font Char 58
+    DAT 0x6202, 0xf8ff
+; Font Char 59
+    DAT 0x6262, 0x0000
+; Font Char 60
+    DAT 0x0000, 0x0007
+; Font Char 61
+    DAT 0x0000, 0xffff
+
+;Missing PIX
+
+;Font Char 62
+    DAT 0x0400, 0x0000
+
+;Splash Screen Definitions
+    DAT 0xffff, 0xffff ; 63 = 0x3f
+    DAT 0xffff, 0xff1f ; 64 = 0x40
+    DAT 0xffff, 0xfff0 ; 65 = 0x41
+    DAT 0xdfdf, 0xdf3f ; 66 = 0x42
+    DAT 0xfefe, 0xfeff ; 67 = 0x43
+    DAT 0xff7f, 0x7fff ; 68 = 0x44
+    DAT 0xfff0, 0xfdf2 ; 69 = 0x45
+    DAT 0xffff, 0x7f7f ; 70 = 0x46
+    DAT 0xfff8, 0xf5f7 ; 71 = 0x47
+    DAT 0xfff4, 0xf5f9 ; 72 = 0x48
+    DAT 0x0707, 0xe7e7 ; 73 = 0x49
+    DAT 0x0000, 0x8f9f ; 74 = 0x4a
+    DAT 0x0000, 0xffff ; 75 = 0x4b
+    DAT 0xe7e7, 0xe7e7 ; 76 = 0x4c
+    DAT 0x9f9f, 0x9f9f ; 77 = 0x4d
+    DAT 0xffff, 0xff7f ; 78 = 0x4e
+    DAT 0xffff, 0xf4f5 ; 79 = 0x4f
+    DAT 0x9f9f, 0x9f8f ; 80 = 0x50
+    DAT 0x7fff, 0x7f7f ; 81 = 0x51
+    DAT 0xf9ff, 0xf0fd ; 82 = 0x52
+    DAT 0xc70f, 0x1fff ; 83 = 0x53
+    DAT 0xc7e0, 0xf0ff ; 84 = 0x54
+    DAT 0xfeff, 0xf0fb ; 85 = 0x55
+    DAT 0xffcf, 0xcfff ; 86 = 0x56
+    DAT 0xff00, 0x00ff ; 87 = 0x57
+    DAT 0xf0ff, 0xf8f7 ; 88 = 0x58
+    DAT 0xffff, 0xdf9f ; 89 = 0x59
+    DAT 0xffff, 0x7f3f ; 90 = 0x5a
+    DAT 0x7fff, 0xff7f ; 91 = 0x5b
+    DAT 0xf7ff, 0xf8f5 ; 92 = 0x5c
+    DAT 0x1f7f, 0xffff ; 93 = 0x5d
+    DAT 0x1fce, 0xe4f1 ; 94 = 0x5e
+    DAT 0x7fff, 0xffff ; 95 = 0x5f
+    DAT 0xf7ff, 0xffff ; 96 = 0x60
+    DAT 0xffff, 0x7f1f ; 97 = 0x61
+    DAT 0xf1e4, 0xce1f ; 98 = 0x62
+    DAT 0x9fdf, 0xffff ; 99 = 0x63
+    DAT 0x3f7f, 0xffff ; 100 = 0x64
+    DAT 0xff7f, 0xffff ; 101 = 0x65
+    DAT 0xfef0, 0xf6ff ; 102 = 0x66
+    DAT 0x1f1f, 0x1fff ; 103 = 0x67
+    DAT 0xf8f7, 0xf8ff ; 104 = 0x68
+    DAT 0xf9ff, 0xfef0 ; 105 = 0x69
+    DAT 0xf6ff, 0xf0fb ; 106 = 0x6a
+    DAT 0xf0ff, 0xf0fd ; 107 = 0x6b
+    DAT 0xf2ff, 0xfef0 ; 108 = 0x6c
+    DAT 0xf6ff, 0xffff ; 109 = 0x6d
+
+;walking pixel
+    DAT 0xffff, 0xffff ; 110 = 0x6e
+    DAT 0xfeff, 0xffff ; 111 = 0x6f
+    DAT 0xfbff, 0xffff ; 112 = 0x70
+    DAT 0xf7ff, 0xffff ; 113 = 0x71
+    DAT 0x7fff, 0xffff ; 114 = 0x72
+    DAT 0xbfff, 0xffff ; 115 = 0x73
+    DAT 0xdfff, 0xffff ; 116 = 0x74
+
+;jumping pixel
+
+    DAT 0xffff, 0xffff ; 117 = 0x75
+    DAT 0xfeff, 0xffff ; 118 = 0x76
+    DAT 0xfbff, 0xffff ; 119 = 0x77
+    DAT 0xf7ff, 0xffff ; 120 = 0x78
+    DAT 0x7fff, 0xffff ; 121 = 0x79
+    DAT 0xbfff, 0xffff ; 122 = 0x7a
+    DAT 0xdfff, 0xffff ; 123 = 0x7b
+
+:pixelWalking
+    DAT 0x016f ; (2, 1)
+    DAT 0x0170 ; (5, 1)
+    DAT 0x016f ; (8, 1)
+
+:walking_1
+    DAT 0x0301 ; (0, 1)
+    DAT 0x0304 ; (3, 1)
+    DAT 0x0307 ; (6, 1)
+
+:walking_2
+    DAT 0x0302 ; (1, 0)
+    DAT 0x0305 ; (4, 0)
+    DAT 0x0302 ; (7, 0)
+
+:walking_3
+    DAT 0x0303 ; (1, 1)
+    DAT 0x0306 ; (4, 1)
+    DAT 0x0308 ; (7, 1)
+
+:jumping_0
+    DAT 0x0310 ; (18, 0)
+    DAT 0x0314 ; (21, 0)
+    DAT 0x0318 ; (24, 0)
+
+:jumping_1
+    DAT 0x0311 ; (18, 1)
+    DAT 0x0315 ; (21, 1)
+    DAT 0x0319 ; (24, 1)
+
+:jumping_2
+    DAT 0x0312 ; (19, 0)
+    DAT 0x0316 ; (22, 0)
+    DAT 0x031a ; (25, 0)
+
+:jumping_3
+    DAT 0x0313 ; (19, 1)
+    DAT 0x0317 ; (22, 1)
+    DAT 0x031b ; (25, 1)
+
+:jumpingPixel
+    DAT 0x0179 ; (20, 0)
+    DAT 0x017a ; (23, 0)
+    DAT 0x017b ; (26, 0)
+
+:blockLeft
+    DAT 0x0106
+    DAT 0x0101
+    DAT 0x0103
+    DAT 0x0104
+    ;DAT 0x0102
+    
+:blockRight
+    DAT 0x002a
+    DAT 0x332a
+    DAT 0x332a
+    DAT 0x332a
+    ;DAT 0x0106
+    
+:buildingSolidMiddle
+    DAT 0x332a
+    DAT 0x332a
+    DAT 0x332a
+    DAT 0x332a
+    ;DAT 0x0106
+    
+:gapMiddle
+    DAT 0x002a
+    DAT 0x002a
+    DAT 0x002a
+    DAT 0x002a
+
+:buildingSolidLeft ; (0, 1)
+    DAT 0x0020 ; (10, 1) fg#0 bg#0 C#42
+    DAT 0x0324 ; (7, 1) fg#0 bg#1 C#34
+    DAT 0x032c ; (3, 1) fg#1 bg#0 C#44
+    DAT 0x0325 ; (0, 1) fg#1 bg#0 C#37
+    DAT 0x332A
+
+:buildingSolidRight ; (0, 1)
+    DAT 0x3320 ; (10, 1) fg#0 bg#0 C#42
+    DAT 0x3024 ; (7, 1) fg#0 bg#1 C#34
+    DAT 0x302c ; (3, 1) fg#1 bg#0 C#44
+    DAT 0x3025 ; (0, 1) fg#1 bg#0 C#37
+    DAT 0x002A
+
+:parapetLeft    ;correct
+    DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
+    DAT 0x0328 ; (7, 0) fg#0 bg#1 C#40
+    DAT 0x0321 ; (3, 0) fg#1 bg#0 C#33
+    DAT 0x301F ; (0, 0) fg#1 bg#0 C#31
+    ;DAT 0x3027 ;(1,0) C#60
+    
+:parapetLeftMiddle
+    DAT 0x0338 ;(1,0) C#35
+    DAT 0x031e ;(1,0) C#35
+    DAT 0x032b ;(1,0) C#35
+    DAT 0x0323 ;(1,0) C#35
+    
+:parapetMiddle
+    DAT 0x033b ;(1,0) C#
+    DAT 0x031e ;(1,0) C#
+    DAT 0x032b ;(1,0) C#
+    DAT 0x0323 ;(1,0) C#
+
+:parapetRightMiddle        ;correct
+    DAT 0x033b ;(1,0) C#59
+    DAT 0x031e ;(1,0) C#30
+    DAT 0x031d ;(1,0) C#29
+    DAT 0x0326 ;C#38
+
+:parapetRight
+    DAT 0x033a ;C#58
+    DAT 0x0327 ; (3, 0) fg#1 bg#0 C#39
+    DAT 0x032d ;C#45
+    DAT 0x002A ;blank
