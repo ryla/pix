@@ -76,9 +76,6 @@
     SET PC, POP
 
 :thiefUpdate1
-    IFE [keyboardState], 0
-    SET [thiefState], 3 ; Fall if space released
-
     MOD [mainLoopCounter], 2
     IFN [mainLoopCounter], 0
     SET PC, POP         ; Return if we're still waiting for the next frame
