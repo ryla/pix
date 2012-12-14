@@ -1,3 +1,10 @@
+; Pix. 
+; A Canabalt-inspired game in DCPU-16 assembly.
+;
+; https://github.com/ryla/pix
+; 
+; Alyssa Bawgus, Jazmin Gonzalez-Rivero, Julian Ceipek, Riley Butler
+;
     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock to tick at 1/60s
