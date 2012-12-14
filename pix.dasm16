@@ -1,11 +1,15 @@
     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock to tick at 1/60s
+    SET [isfirstGame],1
 :newGame                ; Stuff that needs to happen to make a new game
     JSR fillScrollBuffer ; Fill the scroll buffer for the start of the game
     JSR setupBlockGenerator ; Setup the block generator
+    SET [isOnSplash], 1
     JSR splashScreen    ; Display splash screen and wait for spacebar
+    SET [isOnSplash], 0
     JSR setRandomSeed   ; Set the random seed from the clock
+    JSR drawBackdrop
     JSR startMainLoop   ; Configure mainLoop to be triggered every 1/60s
 
 :runGame
@@ -13,6 +17,7 @@
     SET PC, runGame
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
+    SET [isfirstGame], 0
 
     JSR stopMainLoop    ; Stop clock interrupts
     SET [gameOver], 0   ; New game isn't over!
@@ -151,6 +156,12 @@
 :mainLoopCounter
     DAT 0
 
+:isfirstGame
+    DAT 1
+
+:isOnSplash
+    DAT 0
+
 :gameOver
     DAT 0
 
@@ -221,9 +232,15 @@
 
 ; Display the players current score
 :displayScore
+    IFE [isOnSplash],0
     SET X, 0x801f       ; Score display fist digit location
+    IFE [isOnSplash],1
+    SET X, 0x8132
     SET B, 1            ; Digit to display
 :displayScoreLoop
+    IFE [isOnSplash], 0
+    SET Y, 0x5433       ; Initialize digits to zero
+    IFE [isOnSplash], 1
     SET Y, 0x0433       ; Initialize digits to zero
     
     SET C, [currentScore] ; Set C to the players Current Score
@@ -233,7 +250,11 @@
     SET [X], Y          ; Set X to the display digit
     SUB X, 1            ; Move over by one space
     MUL B, 10           ; Move to next digit that needs to be displayed
+    IFE [isOnSplash],0
     IFG X, 0x8019       ; If we are not at the last display location
+    SET PC, displayScoreLoop ; Loop back to top
+    IFE [isOnSplash],1
+    IFG X, 0x812d       ; If we are not at the last display location
     SET PC, displayScoreLoop ; Loop back to top
     SET PC, POP         ; Return from subroutine
     
@@ -398,6 +419,9 @@
     SET [0x811a], 0x046c ; (26, 8) Loc 282=0x11a; char_idx: 108=0x6c
     SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
 
+    IFE [isfirstGame], 0
+    JSR displayScore
+
 :splashScreenDownLoop   ; Loop while space is down
     JSR keyboardRead
     IFE [keyboardState], 1
@@ -527,6 +551,8 @@
     ; Color 4 (number white)
     DAT 0x0fff
 
+    DAT 0x0434
+
 :monitorFont
 ;THIEF 0-28
     DAT 0xffff, 0xffff ; 0 = 0x0
@@ -557,13 +583,20 @@
     DAT 0xffff, 0xffe3 ; 25 = 0x19
     DAT 0x0bab, 0x77bf ; 26 = 0x1a
     DAT 0xfce3, 0xffff ; 27 = 0x1b
-    DAT 0x0000,0x0000 ;padding
+    
+DAT 0xfc00, 0xc000 ; 28 = 0x5 5
+
 
   ;BUILDING
     DAT 0xffff, 0xfff8 ; 29 = 0x1d
-    DAT 0xffff, 0xffff ; 30 = 0x1e
+    
+    DAT 0xc0c0, 0xc0c0 ; 30 = 0x1 1 part of unordered assignment
+
     DAT 0x0262, 0x0000 ; 31 = 0x1f
-    DAT 0x0000, 0x0000 ; 32 = 0x20
+    
+
+DAT 0x0700, 0x0000 ; 32 = 0x4 4
+
     DAT 0x6262, 0x0000 ; 33 = 0x21
     DAT 0x6202, 0xf8ff ; 34 = 0x22
     DAT 0x0000, 0xffff ; 35 = 0x23
@@ -599,16 +632,14 @@
 ;Padding
 
 
-; Font Char 61
-    DAT 0x0000, 0xffff
+DAT 0xffff, 0xfefc ; 61 = 0x6 6
 
-;Missing PIX
-
-;Font Char 62
-    DAT 0x0400, 0x0000
+DAT 0xf0f0, 0xf0f0 ; 62 = 0x7 7
 
 ;Splash Screen Definitions
-    DAT 0xffff, 0xffff ; 63 = 0x3f
+    
+DAT 0x0000, 0x0007 ; 63 = 0x2 2
+
     DAT 0xffff, 0xff1f ; 64 = 0x40
     DAT 0xffff, 0xfff0 ; 65 = 0x41
     DAT 0xdfdf, 0xdf3f ; 66 = 0x42
@@ -657,7 +688,9 @@
     DAT 0xf6ff, 0xffff ; 109 = 0x6d
 
 ;walking pixel
-    DAT 0xffff, 0xffff ; 110 = 0x6e
+
+DAT 0x0000, 0x1030 ; 110 = 0xc 12
+
     DAT 0xfeff, 0xffff ; 111 = 0x6f
     DAT 0xfbff, 0xffff ; 112 = 0x70
     DAT 0xf7ff, 0xffff ; 113 = 0x71
@@ -667,13 +700,20 @@
 
 ;jumping pixel
 
-    DAT 0xffff, 0xffff ; 117 = 0x75
+  DAT 0x3010, 0x0000 ; 117 = 0xd 13
+
     DAT 0xfeff, 0xffff ; 118 = 0x76
     DAT 0xfbff, 0xffff ; 119 = 0x77
     DAT 0xf7ff, 0xffff ; 120 = 0x78
     DAT 0x7fff, 0xffff ; 121 = 0x79
     DAT 0xbfff, 0xffff ; 122 = 0x7a
     DAT 0xdfff, 0xffff ; 123 = 0x7b
+
+DAT 0xf0f0, 0xf0f7 ; 124 = 0x8  8
+DAT 0xf7f0, 0xf0f0 ; 125 = 0x9 9
+DAT 0xfcfc, 0xfcfc ; 126 = 0xa 10
+DAT 0xf8f8, 0xf8f8 ; 127 = 0xb 11
+
 
 ;LUTs with animation frame indexes for various graphics
 
@@ -683,39 +723,39 @@
     DAT 0x016f ; (8, 1)
 
 :walking_1
-    DAT 0x0301 ; (0, 1)
-    DAT 0x0304 ; (3, 1)
-    DAT 0x0307 ; (6, 1)
+    DAT 0x0201 ; (0, 1)
+    DAT 0x0204 ; (3, 1)
+    DAT 0x0207 ; (6, 1)
 
 :walking_2
-    DAT 0x0302 ; (1, 0)
-    DAT 0x0305 ; (4, 0)
-    DAT 0x0302 ; (7, 0)
+    DAT 0x0202 ; (1, 0)
+    DAT 0x0205 ; (4, 0)
+    DAT 0x0202 ; (7, 0)
 
 :walking_3
-    DAT 0x0303 ; (1, 1)
-    DAT 0x0306 ; (4, 1)
-    DAT 0x0308 ; (7, 1)
+    DAT 0x0203 ; (1, 1)
+    DAT 0x0206 ; (4, 1)
+    DAT 0x0208 ; (7, 1)
 
 :jumping_0
-    DAT 0x0310 ; (18, 0)
-    DAT 0x0314 ; (21, 0)
-    DAT 0x0318 ; (24, 0)
+    DAT 0x0210 ; (18, 0)
+    DAT 0x0214 ; (21, 0)
+    DAT 0x0218 ; (24, 0)
 
 :jumping_1
-    DAT 0x0311 ; (18, 1)
-    DAT 0x0315 ; (21, 1)
-    DAT 0x0319 ; (24, 1)
+    DAT 0x0211 ; (18, 1)
+    DAT 0x0215 ; (21, 1)
+    DAT 0x0219 ; (24, 1)
 
 :jumping_2
-    DAT 0x0312 ; (19, 0)
-    DAT 0x0316 ; (22, 0)
-    DAT 0x031a ; (25, 0)
+    DAT 0x0212 ; (19, 0)
+    DAT 0x0216 ; (22, 0)
+    DAT 0x021a ; (25, 0)
 
 :jumping_3
-    DAT 0x0313 ; (19, 1)
-    DAT 0x0317 ; (22, 1)
-    DAT 0x031b ; (25, 1)
+    DAT 0x0213 ; (19, 1)
+    DAT 0x0217 ; (22, 1)
+    DAT 0x021b ; (25, 1)
 
 :jumpingPixel
     DAT 0x0179 ; (20, 0)
@@ -734,7 +774,7 @@
     DAT 0x0329 ; (10, 0)
     DAT 0x032e ; (15, 0)
 :buildingSolidLeft
-    DAT 0x031e ; (0, 1)
+    DAT 0x0300 ; (0, 1)
     DAT 0x0325 ; (5, 1)
     DAT 0x032a ; (10, 1)
     DAT 0x032f ; (15, 1)
@@ -744,10 +784,10 @@
     DAT 0x032b ; (11, 0)
     DAT 0x0330 ; (16, 0)
 :buildingSolidMiddle
-    DAT 0x0320 ; (1, 1)
-    DAT 0x0320 ; (6, 1)
-    DAT 0x0320 ; (11, 1)
-    DAT 0x0320 ; (16, 1)
+    DAT 0x3000 ; (1, 1)
+    DAT 0x3000 ; (6, 1)
+    DAT 0x3000 ; (11, 1)
+    DAT 0x3000 ; (16, 1)
 :parapetMiddle
     DAT 0x0321 ; (2, 0)
     DAT 0x0326 ; (7, 0)
@@ -759,17 +799,141 @@
     DAT 0x032c ; (13, 0)
     DAT 0x0331 ; (18, 0)
 :buildingSolidRightMiddle
-    DAT 0x0320 ; (3, 1)
-    DAT 0x0320 ; (8, 1)
-    DAT 0x0320 ; (13, 1)
+    DAT 0x3000 ; (3, 1)
+    DAT 0x3000 ; (8, 1)
+    DAT 0x3000 ; (13, 1)
     DAT 0x0332 ; (18, 1)
 :parapetRight
     DAT 0x0322 ; (4, 0)
     DAT 0x0327 ; (9, 0)
     DAT 0x032d ; (14, 0)
-    DAT 0x031e ; (19, 0)
+    DAT 0x0300 ; (19, 0)
 :buildingSolidRight
     DAT 0x0323 ; (4, 1)
     DAT 0x0328 ; (9, 1)
-    DAT 0x031e ; (14, 1)
-    DAT 0x031e ; (19, 1)
+    DAT 0x0300 ; (14, 1)
+    DAT 0x0300 ; (19, 1)
+
+
+:drawBackdrop
+
+
+SET [0x8000], 0x5000 ; (0, 0) Loc 0=0x000; char_idx: 0=0x00
+SET [0x8020], 0x5000 ; (0, 1) Loc 32=0x020; char_idx: 0=0x00
+SET [0x8040], 0x5000 ; (0, 2) Loc 64=0x050; char_idx: 0=0x00
+SET [0x8060], 0x5000 ; (0, 3) Loc 96=0x060; char_idx: 0=0x00
+SET [0x8080], 0x051e ; (0, 4) Loc 128=0x080; char_idx: 1=0x01
+SET [0x8001], 0x5000 ; (1, 0) Loc 1=0x001; char_idx: 0=0x00
+SET [0x8021], 0x053f ; (1, 1) Loc 33=0x021; char_idx: 2=0x02
+SET [0x8041], 0x5000 ; (1, 2) Loc 65=0x051; char_idx: 0=0x00
+SET [0x8061], 0x5000 ; (1, 3) Loc 97=0x061; char_idx: 0=0x00
+SET [0x8081], 0x051e ; (1, 4) Loc 129=0x081; char_idx: 1=0x01
+SET [0x8002], 0x5000 ; (2, 0) Loc 2=0x002; char_idx: 0=0x00
+SET [0x8003], 0x5000 ; (3, 0) Loc 3=0x003; char_idx: 0=0x00
+SET [0x8004], 0x5000 ; (4, 0) Loc 4=0x004; char_idx: 0=0x00
+SET [0x8005], 0x5000 ; (5, 0) Loc 5=0x005; char_idx: 0=0x00
+SET [0x8006], 0x5000 ; (6, 0) Loc 6=0x006; char_idx: 0=0x00
+SET [0x8007], 0x5000 ; (7, 0) Loc 7=0x007; char_idx: 0=0x00
+SET [0x8008], 0x5000 ; (8, 0) Loc 8=0x008; char_idx: 0=0x00
+SET [0x8028], 0x0520 ; (8, 1) Loc 40=0x028; char_idx: 4=0x05
+SET [0x8048], 0x5000 ; (8, 2) Loc 72=0x058; char_idx: 0=0x00
+SET [0x8009], 0x5000 ; (9, 0) Loc 9=0x009; char_idx: 0=0x00
+SET [0x8029], 0x5000 ; (9, 1) Loc 41=0x029; char_idx: 0=0x00
+SET [0x8049], 0x5000 ; (9, 2) Loc 73=0x059; char_idx: 0=0x00
+SET [0x800a], 0x5000 ; (10, 0) Loc 10=0x00a; char_idx: 0=0x00
+SET [0x802a], 0x5000 ; (10, 1) Loc 42=0x02a; char_idx: 0=0x00
+SET [0x804a], 0x5000 ; (10, 2) Loc 74=0x05a; char_idx: 0=0x00
+SET [0x800b], 0x5000 ; (11, 0) Loc 11=0x00b; char_idx: 0=0x00
+SET [0x802b], 0x5000 ; (11, 1) Loc 43=0x02b; char_idx: 0=0x00
+SET [0x804b], 0x051c ; (11, 2) Loc 75=0x05b; char_idx: 5=0x05
+SET [0x800c], 0x5000 ; (12, 0) Loc 12=0x00c; char_idx: 0=0x00
+SET [0x802c], 0x5000 ; (12, 1) Loc 44=0x02c; char_idx: 0=0x00
+SET [0x804c], 0x5000 ; (12, 2) Loc 76=0x05c; char_idx: 0=0x00
+SET [0x806c], 0x503f ; (12, 3) Loc 108=0x06c; char_idx: 4=0x05
+SET [0x808c], 0x053d ; (12, 4) Loc 140=0x08c; char_idx: 6=0x06
+SET [0x800d], 0x5000 ; (13, 0) Loc 13=0x00d; char_idx: 0=0x00
+SET [0x802d], 0x5000 ; (13, 1) Loc 45=0x02d; char_idx: 0=0x00
+SET [0x804d], 0x5000 ; (13, 2) Loc 77=0x05d; char_idx: 0=0x00
+SET [0x806d], 0x5000 ; (13, 3) Loc 109=0x06d; char_idx: 0=0x00
+SET [0x808d], 0x053e ; (13, 4) Loc 141=0x08d; char_idx: 7=0x07
+SET [0x800e], 0x5000 ; (14, 0) Loc 14=0x00e; char_idx: 0=0x00
+SET [0x802e], 0x5000 ; (14, 1) Loc 46=0x02e; char_idx: 0=0x00
+SET [0x804e], 0x5000 ; (14, 2) Loc 78=0x05e; char_idx: 0=0x00
+SET [0x806e], 0x5000 ; (14, 3) Loc 110=0x06e; char_idx: 0=0x00
+SET [0x808e], 0x053e ; (14, 4) Loc 142=0x08e; char_idx: 7=0x07
+SET [0x800f], 0x5000 ; (15, 0) Loc 15=0x00f; char_idx: 0=0x00
+SET [0x802f], 0x5000 ; (15, 1) Loc 47=0x02f; char_idx: 0=0x00
+SET [0x804f], 0x5000 ; (15, 2) Loc 79=0x05f; char_idx: 0=0x00
+SET [0x806f], 0x5000 ; (15, 3) Loc 111=0x06f; char_idx: 0=0x00
+SET [0x808f], 0x057c ; (15, 4) Loc 143=0x08f; char_idx: 8=0x08
+SET [0x8010], 0x5000 ; (16, 0) Loc 16=0x010; char_idx: 0=0x00
+SET [0x8030], 0x5000 ; (16, 1) Loc 48=0x050; char_idx: 0=0x00
+SET [0x8050], 0x5000 ; (16, 2) Loc 80=0x050; char_idx: 0=0x00
+SET [0x8070], 0x5000 ; (16, 3) Loc 112=0x070; char_idx: 0=0x00
+SET [0x8011], 0x5000 ; (17, 0) Loc 17=0x011; char_idx: 0=0x00
+SET [0x8031], 0x5000 ; (17, 1) Loc 49=0x051; char_idx: 0=0x00
+SET [0x8051], 0x5000 ; (17, 2) Loc 81=0x051; char_idx: 0=0x00
+SET [0x8071], 0x5000 ; (17, 3) Loc 113=0x071; char_idx: 0=0x00
+SET [0x8012], 0x5000 ; (18, 0) Loc 18=0x012; char_idx: 0=0x00
+SET [0x8032], 0x5000 ; (18, 1) Loc 50=0x052; char_idx: 0=0x00
+SET [0x8052], 0x5000 ; (18, 2) Loc 82=0x052; char_idx: 0=0x00
+SET [0x8072], 0x5000 ; (18, 3) Loc 114=0x072; char_idx: 0=0x00
+SET [0x8013], 0x5000 ; (19, 0) Loc 19=0x013; char_idx: 0=0x00
+SET [0x8033], 0x5000 ; (19, 1) Loc 51=0x053; char_idx: 0=0x00
+SET [0x8053], 0x5000 ; (19, 2) Loc 83=0x053; char_idx: 0=0x00
+SET [0x8073], 0x5000 ; (19, 3) Loc 115=0x073; char_idx: 0=0x00
+SET [0x8093], 0x057d ; (19, 4) Loc 147=0x093; char_idx: 9=0x09
+SET [0x8014], 0x5000 ; (20, 0) Loc 20=0x014; char_idx: 0=0x00
+SET [0x8034], 0x5000 ; (20, 1) Loc 52=0x054; char_idx: 0=0x00
+SET [0x8054], 0x5000 ; (20, 2) Loc 84=0x054; char_idx: 0=0x00
+SET [0x8074], 0x5000 ; (20, 3) Loc 116=0x074; char_idx: 0=0x00
+SET [0x8094], 0x057e ; (20, 4) Loc 148=0x094; char_idx: 10=0x0a
+SET [0x8015], 0x5000 ; (21, 0) Loc 21=0x015; char_idx: 0=0x00
+SET [0x8035], 0x5000 ; (21, 1) Loc 53=0x055; char_idx: 0=0x00
+SET [0x8055], 0x5000 ; (21, 2) Loc 85=0x055; char_idx: 0=0x00
+SET [0x8075], 0x5000 ; (21, 3) Loc 117=0x075; char_idx: 0=0x00
+SET [0x8095], 0x057e ; (21, 4) Loc 149=0x095; char_idx: 10=0x0a
+SET [0x8016], 0x5000 ; (22, 0) Loc 22=0x016; char_idx: 0=0x00
+SET [0x8036], 0x5000 ; (22, 1) Loc 54=0x056; char_idx: 0=0x00
+SET [0x8056], 0x5000 ; (22, 2) Loc 86=0x056; char_idx: 0=0x00
+SET [0x8076], 0x5000 ; (22, 3) Loc 118=0x076; char_idx: 0=0x00
+SET [0x8096], 0x057e ; (22, 4) Loc 150=0x096; char_idx: 10=0x0a
+SET [0x8017], 0x5000 ; (23, 0) Loc 23=0x017; char_idx: 0=0x00
+SET [0x8037], 0x5000 ; (23, 1) Loc 55=0x057; char_idx: 0=0x00
+SET [0x8057], 0x5000 ; (23, 2) Loc 87=0x057; char_idx: 0=0x00
+SET [0x8077], 0x5000 ; (23, 3) Loc 119=0x077; char_idx: 0=0x00
+SET [0x8097], 0x057e ; (23, 4) Loc 151=0x097; char_idx: 10=0x0a
+SET [0x8018], 0x5000 ; (24, 0) Loc 24=0x018; char_idx: 0=0x00
+SET [0x8038], 0x5000 ; (24, 1) Loc 56=0x058; char_idx: 0=0x00
+SET [0x8058], 0x5000 ; (24, 2) Loc 88=0x058; char_idx: 0=0x00
+SET [0x8078], 0x5000 ; (24, 3) Loc 120=0x078; char_idx: 0=0x00
+SET [0x8098], 0x057f ; (24, 4) Loc 152=0x098; char_idx: 11=0x0b
+SET [0x8019], 0x5000 ; (25, 0) Loc 25=0x019; char_idx: 0=0x00
+SET [0x8039], 0x5000 ; (25, 1) Loc 57=0x059; char_idx: 0=0x00
+SET [0x8059], 0x056e ; (25, 2) Loc 89=0x059; char_idx: 12=0x0c
+SET [0x8079], 0x5000 ; (25, 3) Loc 121=0x079; char_idx: 0=0x00
+SET [0x8099], 0x057f ; (25, 4) Loc 153=0x099; char_idx: 11=0x0b
+SET [0x801a], 0x5000 ; (26, 0) Loc 26=0x01a; char_idx: 0=0x00
+SET [0x803a], 0x5000 ; (26, 1) Loc 58=0x05a; char_idx: 0=0x00
+SET [0x805a], 0x053e ; (26, 2) Loc 90=0x05a; char_idx: 7=0x07
+SET [0x801b], 0x5000 ; (27, 0) Loc 27=0x01b; char_idx: 0=0x00
+SET [0x803b], 0x5000 ; (27, 1) Loc 59=0x05b; char_idx: 0=0x00
+SET [0x805b], 0x053e ; (27, 2) Loc 91=0x05b; char_idx: 7=0x07
+SET [0x801c], 0x5000 ; (28, 0) Loc 28=0x01c; char_idx: 0=0x00
+SET [0x803c], 0x5000 ; (28, 1) Loc 60=0x05c; char_idx: 0=0x00
+SET [0x805c], 0x053e ; (28, 2) Loc 92=0x05c; char_idx: 7=0x07
+SET [0x801d], 0x5000 ; (29, 0) Loc 29=0x01d; char_idx: 0=0x00
+SET [0x803d], 0x5000 ; (29, 1) Loc 61=0x05d; char_idx: 0=0x00
+SET [0x805d], 0x053e ; (29, 2) Loc 93=0x05d; char_idx: 7=0x07
+SET [0x801e], 0x5000 ; (30, 0) Loc 30=0x01e; char_idx: 0=0x00
+SET [0x803e], 0x5000 ; (30, 1) Loc 62=0x05e; char_idx: 0=0x00
+SET [0x805e], 0x0575 ; (30, 2) Loc 94=0x05e; char_idx: 13=0x0d
+SET [0x807e], 0x5000 ; (30, 3) Loc 126=0x07e; char_idx: 0=0x00
+SET [0x809e], 0x051e ; (30, 4) Loc 158=0x09e; char_idx: 1=0x01
+SET [0x801f], 0x5000 ; (31, 0) Loc 31=0x01f; char_idx: 0=0x00
+SET [0x803f], 0x5000 ; (31, 1) Loc 63=0x05f; char_idx: 0=0x00
+SET [0x805f], 0x5000 ; (31, 2) Loc 95=0x05f; char_idx: 0=0x00
+SET [0x807f], 0x5000 ; (31, 3) Loc 127=0x07f; char_idx: 0=0x00
+SET [0x809f], 0x051e ; (31, 4) Loc 159=0x09f; char_idx: 1=0x01
+
+SET PC,POP
