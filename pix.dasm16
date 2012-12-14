@@ -24,17 +24,17 @@
     ADD [mainLoopCounter], 1
 
     JSR scroll
-    JSR theifUpdate
+    JSR thiefUpdate
     JSR calcScore
 
-    IFE [theifState], 0
+    IFE [thiefState], 0
     JSR running
 
-    IFN [theifState], 0
+    IFN [thiefState], 0
     JSR jumping
     
 ; Collision detection
-    IFE [theifState], 0
+    IFE [thiefState], 0
     IFE [0x8206], gapMiddle
     IFE [0x8205], gapMiddle
     SET [gameOver], 1
@@ -42,49 +42,49 @@
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
-:theifUpdate
-    IFE [theifState], 3
-    SET PC, theifUpdate2
-    IFE [theifState], 2
-    SET PC, theifUpdate2
-    IFE [theifState], 1
-    SET PC, theifUpdate1
+:thiefUpdate
+    IFE [thiefState], 3
+    SET PC, thiefUpdate2
+    IFE [thiefState], 2
+    SET PC, thiefUpdate2
+    IFE [thiefState], 1
+    SET PC, thiefUpdate1
     
-:theifUpdate0
+:thiefUpdate0
     IFE [keyboardState], 1
-    SET [theifState], 2
+    SET [thiefState], 2
 
-    SET [theifJumpTimer], 27
+    SET [thiefJumpTimer], 27
 
     MOD [mainLoopCounter], 10
     IFN [mainLoopCounter], 0
     SET PC, POP
 
-    ADD [theifAnimIndex], 1
-    MOD [theifAnimIndex], 3
+    ADD [thiefAnimIndex], 1
+    MOD [thiefAnimIndex], 3
     SET PC, POP
 
-:theifUpdate1
+:thiefUpdate1
     SET PC, POP
 
-:theifUpdate2
+:thiefUpdate2
     IFE [keyboardState], 0
-    SET [theifState], 0
+    SET [thiefState], 0
 
-    SUB [theifJumpTimer], 1
-    IFE [theifJumpTimer], 0
-    SET [theifState], 0
+    SUB [thiefJumpTimer], 1
+    IFE [thiefJumpTimer], 0
+    SET [thiefState], 0
     
     SET [mainLoopCounter], 0
 
-    SET [theifAnimIndex], 0
+    SET [thiefAnimIndex], 0
     SET PC, POP
 
-:theifUpdate3
+:thiefUpdate3
     SET PC, POP
 
 :running
-    SET A, [theifAnimIndex]
+    SET A, [thiefAnimIndex]
     SET [0x80c5], [0x1100]
     SET [0x80a6], [0x2200]
     SET [0x80a7], [0x2200]
@@ -100,7 +100,7 @@
     SET PC, POP
 
 :jumping
-    SET A, [theifAnimIndex]
+    SET A, [thiefAnimIndex]
     SET [0x80e5], [0x1100]  
     SET [0x80e6], [0x1100] 
     SET [0x80e7], [0x1100] 
@@ -116,13 +116,13 @@
     
     SET PC, POP
 
-:theifAnimIndex
+:thiefAnimIndex
     DAT 0
 
-:theifJumpTimer
+:thiefJumpTimer
     DAT 0
 
-:theifState
+:thiefState
     DAT 0
 
 :mainLoopCounter
