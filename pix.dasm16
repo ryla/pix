@@ -1,81 +1,166 @@
     JSR detectHW        ; Find the addresses of HW we care about
     JSR setupMonitor    ; Configure and initialize the monitor
     JSR setupClock      ; Set up the clock to tick at 1/60s
+    SET [isfirstGame],1
+:newGame                ; Stuff that needs to happen to make a new game
     JSR fillScrollBuffer ; Fill the scroll buffer for the start of the game
+    JSR setupBlockGenerator ; Setup the block generator
+    SET [isOnSplash], 1
     JSR splashScreen    ; Display splash screen and wait for spacebar
+    SET [isOnSplash], 0
     JSR setRandomSeed   ; Set the random seed from the clock
-    JSR setupMainLoop   ; Configure mainLoop to be triggered every 1/60s
+    JSR drawBackdrop
+    JSR startMainLoop   ; Configure mainLoop to be triggered every 1/60s
 
-:infiniteStall
-    SET PC, infiniteStall
+:runGame
+    IFN [gameOver], 1     ; Loop if the game's not over.
+    SET PC, runGame
                         ; Hang here, if everything is golden, we're waiting
                         ; for an interrupt from the clock
+    SET [isfirstGame], 0
+
+    JSR stopMainLoop    ; Stop clock interrupts
+    SET [gameOver], 0   ; New game isn't over!
+    SET PC, newGame     ; Make a new game
 
 ; Main loop. Triggered every 1/60s by an interrupt from the clock
 :mainLoop
     JSR keyboardRead
-    SET [theifJumpState], [keyboardState]
-
-    ADD [theifJumpTimer], 1
-                        ; Increment jump timer
-    IFE [keyboardState], 0;
-                        ; Reset jump timer if key is up
-    SET [theifJumpTimer], 0
-
-    IFG [theifJumpTimer], 20
-                        ; When air time has reached maximum,
-    SET [theifJumpState], 0
-                        ; Stop jumping
-        
     ADD [mainLoopCounter], 1
-                        ; Increment frame counter per cycle
-    MOD [mainLoopCounter], 10
-                        ; Limit J to be less than 10 to run every 1/6 second
-    
-    IFE [mainLoopCounter], 0            
-    ADD [theifAnimIndex], 1             
-                        ; Increment which frame number 
-    MOD [theifAnimIndex], 3
-                        ; Mod for 3 frames of animation
 
-; Scrolling
     JSR scroll
-
-; Running
-    IFE [theifJumpState], 0
-    JSR running
-
-; Jumping    
-    IFE [theifJumpState], 1
-    JSR jumping
-
+    JSR thiefUpdate
     JSR calcScore
 
+    IFE [thiefState], 0
+    JSR running
+
+    IFN [thiefState], 0
+    JSR jumping
+    
 ; Collision detection
-    IFE [theifJumpState], 0
+    IFE [thiefState], 0
     IFE [0x8206], gapMiddle
     IFE [0x8205], gapMiddle
-    SET PC, gameOver
+    SET [gameOver], 1
 
     RFI 0               ; Since mainLoop is technically an interrupt
                         ; service routine, return to where we came from
 
-:theifJumpTimer
+:thiefUpdate
+    IFE [thiefState], 3
+    SET PC, thiefUpdate3
+    IFE [thiefState], 2
+    SET PC, thiefUpdate2
+    IFE [thiefState], 1
+    SET PC, thiefUpdate1
+    
+:thiefUpdate0
+    IFE [keyboardState], 1
+    IFE [thiefJumpTimer], 27
+    SET [thiefState], 1 ; Move to state 1 if spacebar is down and was up or
+                        ; still a lot of time left on the jump timer
+    IFE [keyboardState], 1
+    IFE [thiefJumpTimer], 27
+    SET [thiefAnimIndex], 0 ; Reset anim index if moving to state 1. Couldn't
+                        ; think of a better way to write this IF
+    IFE [keyboardState], 0
+    SET [thiefJumpTimer], 27 ; Reset the jump timer if on the ground (this 
+                        ; state) and spacebar is up
+    MOD [mainLoopCounter], 10
+    IFN [mainLoopCounter], 0
+    SET PC, POP         ; Return if we're still waiting for the next frame
+
+    ADD [thiefAnimIndex], 1 ; Move to the next running animation
+    MOD [thiefAnimIndex], 3 ; Loop animations
+    SET PC, POP
+
+:thiefUpdate1
+    MOD [mainLoopCounter], 2
+    IFN [mainLoopCounter], 0
+    SET PC, POP         ; Return if we're still waiting for the next frame
+
+    ADD [thiefAnimIndex], 1
+    IFE [thiefAnimIndex], 5
+    SET [thiefState], 2
+    SET PC, POP
+
+:thiefUpdate2
+    IFE [keyboardState], 0
+    SET [thiefState], 3 ; Fall if space released
+
+    SUB [thiefJumpTimer], 1 ; Take time off the jump timer
+    IFE [thiefJumpTimer], 0
+    SET [thiefState], 3 ; Fall if timer expired
+    
+    SET [mainLoopCounter], 0 ; Keep main counter reset
+
+    SET [thiefAnimIndex], 5 ; Stay at frame 5
+    SET PC, POP
+
+:thiefUpdate3
+    MOD [mainLoopCounter], 3
+    IFN [mainLoopCounter], 0
+    SET PC, POP         ; Return if we're still waiting for the next frame
+
+    SUB [thiefAnimIndex], 1
+    IFE [thiefAnimIndex], 0
+    SET [thiefState], 0
+    SET PC, POP
+
+:running
+    SET A, [thiefAnimIndex]
+    SET [0x80c5], [0x1100]
+    SET [0x80a6], [0x2200]
+    SET [0x80a7], [0x2200]
+    SET [0x80a5], [0x2200]
+    SET [0x80c7], [0x3300]
+
+    SET [0x80c6], [walking_2+A]
+                        ; Display on 0th frame defined by literal 
+    SET [0x80e5], [walking_1+A]
+                        ; Display on one row down 
+    SET [0x80e6], [walking_3+A]
+    SET [0x80e7], [pixelWalking+A]
+    SET PC, POP
+
+:jumping
+    SET A, [thiefAnimIndex]
+    SET [0x80e5], [0x1100]  
+    SET [0x80e6], [0x1100] 
+    SET [0x80e7], [0x1100] 
+
+    SET [0x80a6], [jumping_2+A]
+    SET [0x80a5], [jumping_0+A]
+    SET [0x80c5], [jumping_1+A]
+                        ; Display on one row down 
+    SET [0x80c6], [jumping_3+A]
+    SET [0x80a7], [jumpingPixel+A]
+    ;ADD [thiefJumpIndex],1
+    ;IFE [thiefJumpIndex],3
+    
+    SET PC, POP
+
+:thiefAnimIndex
     DAT 0
 
-:theifJumpState
+:thiefJumpTimer
+    DAT 0
+
+:thiefState
     DAT 0
 
 :mainLoopCounter
     DAT 0
 
-; End game and stop sending clock interrupts
+:isfirstGame
+    DAT 1
+
+:isOnSplash
+    DAT 0
+
 :gameOver
-    SET A, 2            ; Put clock into set interrupt mode
-    SET B, 0            ; Set clock interrupt message to 1 (off)
-    HWI [clockHWaddr]   ; Send settings to the clock
-    SET SP, 0           ; Clear the stack
-    SET PC, infiniteStall
+    DAT 0
 
 ; Initialize the scroll buffer (at 0x8200) with addresses of tile indices
 :fillScrollBuffer
@@ -92,7 +177,7 @@
 
 ; Animate everything in the scroll buffer
 :scroll
-    SET X, 0            ; Set X to 0, I and J are weirdly in use
+    SET I, 0            ; Set X to 0, I and J are weirdly in use
     ADD [scrollPosition], 1
                         ; Increment the animation index
     MOD [scrollPosition], 4
@@ -103,25 +188,29 @@
                         ; If scrollPosition isn't 0, skip this next bit
     
 :scrollMoveLoop
-    SET [0x8200+X], [0x8201+X]
-                        ; Move each block of the first row over 1
-    SET [0x8220+X], [0x8221+X]
-                        ; Move each block of the second row over 1
-    ADD X, 1            ; Increment X
-    IFL X, 31           ; IF X is less than 31, keep looping
+    SET [0x8200+I], [0x8201+I]
+                        ; Move each block of the top row over 1
+    SET [0x8220+I], [0x8221+I]
+                        ; Move each block of the bottom rows over 1
+    ADD I, 1            ; Increment X
+    IFL I, 31           ; IF X is less than 31, keep looping
     SET PC, scrollMoveLoop
-    SET [0x821f], gapMiddle
-    SET [0x823f], gapMiddle     
+    JSR blockGenerator   
                         ; Add the next block to the end of row
-    SET X, 0            ; Set X to 0 again
+    SET I, 0            ; Set X to 0 again
 
 :scrollAnimLoop
-    SET Y, [0x8200+X]   ; Store the base address of the frame in Y
+    SET X, [0x8200+I]   ; Store the base address of the frame in X
+    SET Y, [0x8220+I]   ; Store the base address of the frame in Y
+    ADD X, [scrollPosition]
+                        ; Add current animation index to X
     ADD Y, [scrollPosition]
-                        ; Add current animation index to Y
-    SET [0x8080+X], [Y] ; Look up VRAM word and write it to VRAM
-    ADD X, 1            ; Increment X
-    IFL X, 64           ; Loop while X is less than 64
+    SET [0x8100+I], [X] ; Look up row 1 word and write it to VRAM
+    SET [0x8120+I], [Y] ; Look up row 2 word and write it to VRAM
+    SET [0x8140+I], [Y] ; Look up row 3 word and write it to VRAM
+    SET [0x8160+I], [Y] ; Look up row 4 word and write it to VRAM
+    ADD I, 1            ; Increment I
+    IFL I, 32           ; Loop while I is less than 32
     SET PC, scrollAnimLoop  
     SET PC, POP         ; Return from subroutine
 
@@ -140,10 +229,16 @@
 
 ; Display the players current score
 :displayScore
+    IFE [isOnSplash],0
     SET X, 0x801f       ; Score display fist digit location
+    IFE [isOnSplash],1
+    SET X, 0x8132
     SET B, 1            ; Digit to display
 :displayScoreLoop
-    SET Y, 0x042e       ; Initialize digits to zero
+    IFE [isOnSplash], 0
+    SET Y, 0x5433       ; Initialize digits to zero
+    IFE [isOnSplash], 1
+    SET Y, 0x0433       ; Initialize digits to zero
     
     SET C, [currentScore] ; Set C to the players Current Score
     DIV C, B            ; Divide by B to "shift" C into the right cut off position
@@ -152,14 +247,18 @@
     SET [X], Y          ; Set X to the display digit
     SUB X, 1            ; Move over by one space
     MUL B, 10           ; Move to next digit that needs to be displayed
+    IFE [isOnSplash],0
     IFG X, 0x8019       ; If we are not at the last display location
+    SET PC, displayScoreLoop ; Loop back to top
+    IFE [isOnSplash],1
+    IFG X, 0x812d       ; If we are not at the last display location
     SET PC, displayScoreLoop ; Loop back to top
     SET PC, POP         ; Return from subroutine
     
 :currentScore            
     DAT 0x0000          ; Player's current score
 
-; Get clock value from start screen to make random generatior
+; Get clock value from start screen to make random generator
 ; As random as possible
 :setRandomSeed        
     SET A, 1            ; Store number of ticks elapsed since last 
@@ -184,7 +283,7 @@
     SET PC, POP         ; Return from subroutine
 
 :randomMin            
-    DAT 0x0000          ; Lower bound for random number
+    DAT 0x0002          ; Lower bound for random number
 
 :randomMax
     DAT 0x0064          ; Upper bound for random number    
@@ -192,72 +291,71 @@
 :randomSeed              
     DAT 0x3e42          ; Seed for random number
 
-; Feeds random number generator to get gap size, and starting point
-:blockCreator    
-    ADD [size], [startingPoint] 
-                        ; Add the size and the starting point of the previous gap together
-    ADD [size], 5       ; Add three to this number because we do not want gaps that are too close together
-    SET [randomMin], [size]
-                        ; Set the min distance to this number
-    ADD [size] , 40     ; Add 10 more to get a new max
-    SET [randomMax], [size]
-                        ; Set max to this number
-    JSR random          ; Call random num gen for starting
-    SET [startingPoint], X
-                        ; Save the new starting point
-    SET [randomMin], 1  ; Min Number of gap spaces in a row
-    SET [randomMax], 5  ; Max number of gap spaces in a row
-    JSR random          ; Call random num generator for size
-    SET [size], X       ; Save the new size
+; Set up blockGenerator
+:setupBlockGenerator
+    SET [blockGeneratorIndex], 0
+                        ; Reset generator index to 0
     SET PC, POP         ; Return from subroutine
 
-:startingPoint
-    DAT 0x0000          ; Starting point for gap
+; Feeds random number generator to get gap size, and starting point
+:blockGenerator 
+    SET A, [blockGeneratorIndex]
+    SET [0x821f], [parapetLUTs+A]
+                        ; pick the Ath Lut
+    SET [0x823f], [buildingLUTs+A]
+                        ; pick the Ath Lut
 
-:size
-    DAT 0x0000          ; Size for gap
-
-:running
-    SET A, [theifAnimIndex]
-    SET [0x8045], [0x1100]
-    SET [0x8026], [0x2200]
-    SET [0x8027], [0x2200]
-    SET [0x8025], [0x2200]
-    SET [0x8047], [0x3300]
-
-    SET [0x8046], [walking_2+A]
-                        ; Display on 0th frame defined by literal 
-    SET [0x8065], [walking_1+A]
-                        ; Display on one row down 
-    SET [0x8066], [walking_3+A]
-    SET [0x8067], [pixelWalking+A]
-    SET PC, POP
-
-:jumping
-    SET A, [thiefJumpIndex]
-    SET [0x8065], [0x1100]  
-    SET [0x8066], [0x1100] 
-    SET [0x8067], [0x1100] 
-
-    SET [0x8026], [jumping_2+A]
-    SET [0x8025], [jumping_0+A]
-    SET [0x8045], [jumping_1+A]
-                        ; Display on one row down 
-    SET [0x8046], [jumping_3+A]
-    SET [0x8027], [jumpingPixel+A]
-    ;ADD [thiefJumpIndex],1
-    ;IFE [thiefJumpIndex],3
     
+    IFE [blockGeneratorIndex], 2
+    SET PC, blockGeneratorWait
+    
+    IFE [blockGeneratorIndex], 5
+    SET PC, blockGeneratorWait
+    
+:blockGeneratorAdd
+    ADD [blockGeneratorIndex], 1
+                        ; move on to next animation
+    MOD [blockGeneratorIndex], 6
+                        ; keep it between 0 and 6
     SET PC, POP
 
-:theifAnimIndex
-    DAT 0
+:blockGeneratorWait
+    SUB [blockGeneratorCounter], 1
+    IFG [blockGeneratorCounter], 0
+    SET PC, POP
+    IFE [blockGeneratorIndex], 2
+    SET [randomMax], 20
+    IFE [blockGeneratorIndex], 5
+    SET [randomMax], 6
+    JSR random
+    SET [blockGeneratorCounter] , X
+    SET PC, blockGeneratorAdd
 
-:thiefJumpIndex
-    DAT 0
+:parapetLUTs    ; Lut of parapet Luts
+    DAT parapetRightMiddle
+    DAT parapetRight
+    DAT gapMiddle
+    DAT parapetLeft
+    DAT parapetLeftMiddle
+    DAT parapetMiddle
+    
+:buildingLUTs   ; Lut of building Luts
+    DAT buildingSolidRightMiddle
+    DAT buildingSolidRight
+    DAT gapMiddle
+    DAT buildingSolidLeft
+    DAT buildingSolidMiddle
+    DAT buildingSolidMiddle
+
+:blockGeneratorCounter
+    DAT 0x0005          ; when in state 1 or 4 get num from random gen 
+
+:blockGeneratorIndex
+    DAT 0x0000          ; Which animation block we are at
 
 ; Display splash screen until spacebar pressed
 :splashScreen
+    JSR clearScreen     ; Clear screen to prep for splash
     SET [0x80e4], 0x0440 ; (4, 7) Loc 228=0x0e4; char_idx: 64=0x40
     SET [0x8104], 0x0441 ; (4, 8) Loc 260=0x104; char_idx: 65=0x41
     SET [0x80e5], 0x0442 ; (5, 7) Loc 229=0x0e5; char_idx: 66=0x42
@@ -318,12 +416,21 @@
     SET [0x811a], 0x046c ; (26, 8) Loc 282=0x11a; char_idx: 108=0x6c
     SET [0x811b], 0x046d ; (27, 8) Loc 283=0x11b; char_idx: 109=0x6d
 
+    IFE [isfirstGame], 0
+    JSR displayScore
+
+:splashScreenDownLoop   ; Loop while space is down
+    JSR keyboardRead
+    IFE [keyboardState], 1
+    SET PC, splashScreenDownLoop
+
+:splashScreenUpLoop     ; Loop while space is up
     JSR keyboardRead
     IFE [keyboardState], 0
+    SET PC, splashScreenUpLoop
+
     JSR clearScreen
-    IFE [keyboardState], 0
     SET PC, POP
-    SET PC, splashScreen
 
 ; Put a 1 in keyboardState is spacebar is down, 0 otherwise
 :keyboardRead
@@ -353,10 +460,16 @@
     SET PC, POP         ; Return from subroutine
 
 ; Setup mainLoop to be triggered once every clock tick
-:setupMainLoop
+:startMainLoop
     IAS mainLoop        ; Set up mainLoop as the interrupt handler
     SET A, 2            ; Put clock into set interrupt mode
     SET B, 1            ; Set clock interrupt message to 1
+    HWI [clockHWaddr]   ; Send settings to the clock
+    SET PC, POP         ; Return from subroutine
+
+:stopMainLoop
+    SET A, 2            ; Put clock into set interrupt mode
+    SET B, 0            ; Turn clock interrupts off
     HWI [clockHWaddr]   ; Send settings to the clock
     SET PC, POP         ; Return from subroutine
 
@@ -435,6 +548,8 @@
     ; Color 4 (number white)
     DAT 0x0fff
 
+    DAT 0x0434
+
 :monitorFont
 ;THIEF 0-28
     DAT 0xffff, 0xffff ; 0 = 0x0
@@ -465,87 +580,63 @@
     DAT 0xffff, 0xffe3 ; 25 = 0x19
     DAT 0x0bab, 0x77bf ; 26 = 0x1a
     DAT 0xfce3, 0xffff ; 27 = 0x1b
-    DAT 0x0000,0x0000 ;padding
+    
+DAT 0xfc00, 0xc000 ; 28 = 0x5 5
+
+
   ;BUILDING
-    ; Font Char 29
-        DAT 0x0000, 0x6202
-    ; Font Char 30
-        DAT 0x6200, 0x0062
-    ; Font Char 31
-        DAT 0x07fd, 0x9dff
-    ; Font Char 32
-        DAT 0x00ff, 0xffff
-    ; Font Char 33
-        DAT 0xfff8, 0x0262
-    ; Font Char 34
-        DAT 0xffff, 0xffff
-    ; Font Char 35
-        DAT 0x0062, 0x6200
-    ; Font Char 36
-        DAT 0xffff, 0xff00
-    ; Font Char 37
-        DAT 0xff00, 0x0000
-    ; Font Char 38
-        DAT 0x0062, 0x02f8
-    ; Font Char 39
-        DAT 0x02f8, 0xffff
-    ; Font Char 40
-        DAT 0xffff, 0xf802
-    ; Font Char 41
-        DAT 0x0000, 0x00ff
-    ; Font Char 42
-        DAT 0x0000, 0x0000
-    ; Font Char 43
-        DAT 0x0000, 0x6262
-    ; Font Char 44
-        DAT 0xffff, 0x0000
-    ; Font Char 45
-        DAT 0xf8ff, 0xffff
+    DAT 0xffff, 0xfff8 ; 29 = 0x1d
+    
+    DAT 0xc0c0, 0xc0c0 ; 30 = 0x1 1 part of unordered assignment
+
+    DAT 0x0262, 0x0000 ; 31 = 0x1f
+    
+
+DAT 0x0700, 0x0000 ; 32 = 0x4 4
+
+    DAT 0x6262, 0x0000 ; 33 = 0x21
+    DAT 0x6202, 0xf8ff ; 34 = 0x22
+    DAT 0x0000, 0xffff ; 35 = 0x23
+    DAT 0xffff, 0xf802 ; 36 = 0x24
+    DAT 0xffff, 0xff00 ; 37 = 0x25
+    DAT 0x6200, 0x0062 ; 38 = 0x26
+    DAT 0x02f8, 0xffff ; 39 = 0x27
+    DAT 0x00ff, 0xffff ; 40 = 0x28
+    DAT 0xfff8, 0x0262 ; 41 = 0x29
+    DAT 0xffff, 0x0000 ; 42 = 0x2a
+    DAT 0x0000, 0x6262 ; 43 = 0x2b
+    DAT 0x0000, 0x6202 ; 44 = 0x2c
+    DAT 0xf8ff, 0xffff ; 45 = 0x2d
+    DAT 0xf802, 0x6200 ; 46 = 0x2e
+    DAT 0xff00, 0x0000 ; 47 = 0x2f
+    DAT 0x0062, 0x6200 ; 48 = 0x30
+    DAT 0x0062, 0x02f8 ; 49 = 0x31
+    DAT 0x0000, 0x00ff ; 50 = 0x32
 
     ;NUMBERS
-    ; Font Char 46
-        DAT 0x837d, 0x83ff ; 0
-    ; Font Char 47
-        DAT 0x7b01, 0x7fff ; 1
-    ; Font Char 48
-        DAT 0x3b4d, 0x73ff ; 2
-    ; Font Char 49
-        DAT 0xbb6d, 0x93ff ; 3
-    ; Font Char 50
-        DAT 0xe1ef, 0x01ff ; 4
-    ; Font Char 51
-        DAT 0xb175, 0x8dff ; 5
-    ; Font Char 52
-        DAT 0x836d, 0x9bff ; 6
-    ; Font Char 53
-        DAT 0x3dcd, 0xf1ff ; 7
-    ; Font Char 54
-        DAT 0x936d, 0x93ff ; 8
-    ; Font Char 55
-        DAT 0xb36d, 0x83ff ; 9
+    DAT 0x837d, 0x83ff ; 51 = 0x33 "0"
+    DAT 0x7b01, 0x7fff ; 52 = 0x34 "1"
+    DAT 0x3b4d, 0x73ff ; 53 = 0x35 "2"
+    DAT 0xbb6d, 0x93ff ; 54 = 0x36 "3" 
+    DAT 0xe1ef, 0x01ff ; 55 = 0x37 "4"
+    DAT 0xb175, 0x8dff ; 56 = 0x38 "5"
+    DAT 0x836d, 0x9bff ; 57 = 0x39 "6"
+    DAT 0x3dcd, 0xf1ff ; 58 = 0x3a "7"
+    DAT 0x936d, 0x93ff ; 59 = 0x3b "8"
+    DAT 0xb36d, 0x83ff ; 60 = 0x3c "9"
 
-    ;other turret that we forgot
 
- ; Font Char 56
-    DAT 0x0262, 0x0000
-; Font Char 57
-    DAT 0xffff, 0xffff
-; Font Char 58
-    DAT 0x6202, 0xf8ff
-; Font Char 59
-    DAT 0x6262, 0x0000
-; Font Char 60
-    DAT 0x0000, 0x0007
-; Font Char 61
-    DAT 0x0000, 0xffff
+;Padding
 
-;Missing PIX
 
-;Font Char 62
-    DAT 0x0400, 0x0000
+DAT 0xffff, 0xfefc ; 61 = 0x6 6
+
+DAT 0xf0f0, 0xf0f0 ; 62 = 0x7 7
 
 ;Splash Screen Definitions
-    DAT 0xffff, 0xffff ; 63 = 0x3f
+    
+DAT 0x0000, 0x0007 ; 63 = 0x2 2
+
     DAT 0xffff, 0xff1f ; 64 = 0x40
     DAT 0xffff, 0xfff0 ; 65 = 0x41
     DAT 0xdfdf, 0xdf3f ; 66 = 0x42
@@ -594,7 +685,9 @@
     DAT 0xf6ff, 0xffff ; 109 = 0x6d
 
 ;walking pixel
-    DAT 0xffff, 0xffff ; 110 = 0x6e
+
+DAT 0x0000, 0x1030 ; 110 = 0xc 12
+
     DAT 0xfeff, 0xffff ; 111 = 0x6f
     DAT 0xfbff, 0xffff ; 112 = 0x70
     DAT 0xf7ff, 0xffff ; 113 = 0x71
@@ -604,7 +697,8 @@
 
 ;jumping pixel
 
-    DAT 0xffff, 0xffff ; 117 = 0x75
+  DAT 0x3010, 0x0000 ; 117 = 0xd 13
+
     DAT 0xfeff, 0xffff ; 118 = 0x76
     DAT 0xfbff, 0xffff ; 119 = 0x77
     DAT 0xf7ff, 0xffff ; 120 = 0x78
@@ -612,71 +706,58 @@
     DAT 0xbfff, 0xffff ; 122 = 0x7a
     DAT 0xdfff, 0xffff ; 123 = 0x7b
 
+DAT 0xf0f0, 0xf0f7 ; 124 = 0x8  8
+DAT 0xf7f0, 0xf0f0 ; 125 = 0x9 9
+DAT 0xfcfc, 0xfcfc ; 126 = 0xa 10
+DAT 0xf8f8, 0xf8f8 ; 127 = 0xb 11
+
+
+;LUTs with animation frame indexes for various graphics
+
 :pixelWalking
     DAT 0x016f ; (2, 1)
     DAT 0x0170 ; (5, 1)
     DAT 0x016f ; (8, 1)
 
 :walking_1
-    DAT 0x0301 ; (0, 1)
-    DAT 0x0304 ; (3, 1)
-    DAT 0x0307 ; (6, 1)
+    DAT 0x0201 ; (0, 1)
+    DAT 0x0204 ; (3, 1)
+    DAT 0x0207 ; (6, 1)
 
 :walking_2
-    DAT 0x0302 ; (1, 0)
-    DAT 0x0305 ; (4, 0)
-    DAT 0x0302 ; (7, 0)
+    DAT 0x0202 ; (1, 0)
+    DAT 0x0205 ; (4, 0)
+    DAT 0x0202 ; (7, 0)
 
 :walking_3
-    DAT 0x0303 ; (1, 1)
-    DAT 0x0306 ; (4, 1)
-    DAT 0x0308 ; (7, 1)
+    DAT 0x0203 ; (1, 1)
+    DAT 0x0206 ; (4, 1)
+    DAT 0x0208 ; (7, 1)
 
 :jumping_0
-    DAT 0x0310 ; (18, 0)
-    DAT 0x0314 ; (21, 0)
-    DAT 0x0318 ; (24, 0)
+    DAT 0x0210 ; (18, 0)
+    DAT 0x0214 ; (21, 0)
+    DAT 0x0218 ; (24, 0)
 
 :jumping_1
-    DAT 0x0311 ; (18, 1)
-    DAT 0x0315 ; (21, 1)
-    DAT 0x0319 ; (24, 1)
+    DAT 0x0211 ; (18, 1)
+    DAT 0x0215 ; (21, 1)
+    DAT 0x0219 ; (24, 1)
 
 :jumping_2
-    DAT 0x0312 ; (19, 0)
-    DAT 0x0316 ; (22, 0)
-    DAT 0x031a ; (25, 0)
+    DAT 0x0212 ; (19, 0)
+    DAT 0x0216 ; (22, 0)
+    DAT 0x021a ; (25, 0)
 
 :jumping_3
-    DAT 0x0313 ; (19, 1)
-    DAT 0x0317 ; (22, 1)
-    DAT 0x031b ; (25, 1)
+    DAT 0x0213 ; (19, 1)
+    DAT 0x0217 ; (22, 1)
+    DAT 0x021b ; (25, 1)
 
 :jumpingPixel
     DAT 0x0179 ; (20, 0)
     DAT 0x017a ; (23, 0)
     DAT 0x017b ; (26, 0)
-
-:blockLeft
-    DAT 0x0106
-    DAT 0x0101
-    DAT 0x0103
-    DAT 0x0104
-    ;DAT 0x0102
-    
-:blockRight
-    DAT 0x002a
-    DAT 0x332a
-    DAT 0x332a
-    DAT 0x332a
-    ;DAT 0x0106
-    
-:buildingSolidMiddle
-    DAT 0x332a
-    DAT 0x332a
-    DAT 0x332a
-    DAT 0x332a
-    ;DAT 0x0106
     
 :gapMiddle
     DAT 0x002a
@@ -684,47 +765,172 @@
     DAT 0x002a
     DAT 0x002a
 
-:buildingSolidLeft ; (0, 1)
-    DAT 0x0020 ; (10, 1) fg#0 bg#0 C#42
-    DAT 0x0324 ; (7, 1) fg#0 bg#1 C#34
-    DAT 0x032c ; (3, 1) fg#1 bg#0 C#44
-    DAT 0x0325 ; (0, 1) fg#1 bg#0 C#37
-    DAT 0x332A
-
-:buildingSolidRight ; (0, 1)
-    DAT 0x3320 ; (10, 1) fg#0 bg#0 C#42
-    DAT 0x3024 ; (7, 1) fg#0 bg#1 C#34
-    DAT 0x302c ; (3, 1) fg#1 bg#0 C#44
-    DAT 0x3025 ; (0, 1) fg#1 bg#0 C#37
-    DAT 0x002A
-
-:parapetLeft    ;correct
-    DAT 0x303C ; (10, 0) fg#0 bg#0 C#39 end
-    DAT 0x0328 ; (7, 0) fg#0 bg#1 C#40
-    DAT 0x0321 ; (3, 0) fg#1 bg#0 C#33
-    DAT 0x301F ; (0, 0) fg#1 bg#0 C#31
-    ;DAT 0x3027 ;(1,0) C#60
-    
+:parapetLeft
+    DAT 0x031d ; (0, 0)
+    DAT 0x0324 ; (5, 0)
+    DAT 0x0329 ; (10, 0)
+    DAT 0x032e ; (15, 0)
+:buildingSolidLeft
+    DAT 0x0300 ; (0, 1)
+    DAT 0x0325 ; (5, 1)
+    DAT 0x032a ; (10, 1)
+    DAT 0x032f ; (15, 1)
 :parapetLeftMiddle
-    DAT 0x0338 ;(1,0) C#35
-    DAT 0x031e ;(1,0) C#35
-    DAT 0x032b ;(1,0) C#35
-    DAT 0x0323 ;(1,0) C#35
-    
+    DAT 0x031f ; (1, 0)
+    DAT 0x0326 ; (6, 0)
+    DAT 0x032b ; (11, 0)
+    DAT 0x0330 ; (16, 0)
+:buildingSolidMiddle
+    DAT 0x3000 ; (1, 1)
+    DAT 0x3000 ; (6, 1)
+    DAT 0x3000 ; (11, 1)
+    DAT 0x3000 ; (16, 1)
 :parapetMiddle
-    DAT 0x033b ;(1,0) C#
-    DAT 0x031e ;(1,0) C#
-    DAT 0x032b ;(1,0) C#
-    DAT 0x0323 ;(1,0) C#
-
-:parapetRightMiddle        ;correct
-    DAT 0x033b ;(1,0) C#59
-    DAT 0x031e ;(1,0) C#30
-    DAT 0x031d ;(1,0) C#29
-    DAT 0x0326 ;C#38
-
+    DAT 0x0321 ; (2, 0)
+    DAT 0x0326 ; (7, 0)
+    DAT 0x032b ; (12, 0)
+    DAT 0x0330 ; (17, 0)
+:parapetRightMiddle
+    DAT 0x0321 ; (3, 0)
+    DAT 0x0326 ; (8, 0)
+    DAT 0x032c ; (13, 0)
+    DAT 0x0331 ; (18, 0)
+:buildingSolidRightMiddle
+    DAT 0x3000 ; (3, 1)
+    DAT 0x3000 ; (8, 1)
+    DAT 0x3000 ; (13, 1)
+    DAT 0x0332 ; (18, 1)
 :parapetRight
-    DAT 0x033a ;C#58
-    DAT 0x0327 ; (3, 0) fg#1 bg#0 C#39
-    DAT 0x032d ;C#45
-    DAT 0x002A ;blank
+    DAT 0x0322 ; (4, 0)
+    DAT 0x0327 ; (9, 0)
+    DAT 0x032d ; (14, 0)
+    DAT 0x0300 ; (19, 0)
+:buildingSolidRight
+    DAT 0x0323 ; (4, 1)
+    DAT 0x0328 ; (9, 1)
+    DAT 0x0300 ; (14, 1)
+    DAT 0x0300 ; (19, 1)
+
+
+:drawBackdrop
+
+
+SET [0x8000], 0x5000 ; (0, 0) Loc 0=0x000; char_idx: 0=0x00
+SET [0x8020], 0x5000 ; (0, 1) Loc 32=0x020; char_idx: 0=0x00
+SET [0x8040], 0x5000 ; (0, 2) Loc 64=0x050; char_idx: 0=0x00
+SET [0x8060], 0x5000 ; (0, 3) Loc 96=0x060; char_idx: 0=0x00
+SET [0x8080], 0x051e ; (0, 4) Loc 128=0x080; char_idx: 1=0x01
+SET [0x8001], 0x5000 ; (1, 0) Loc 1=0x001; char_idx: 0=0x00
+SET [0x8021], 0x053f ; (1, 1) Loc 33=0x021; char_idx: 2=0x02
+SET [0x8041], 0x5000 ; (1, 2) Loc 65=0x051; char_idx: 0=0x00
+SET [0x8061], 0x5000 ; (1, 3) Loc 97=0x061; char_idx: 0=0x00
+SET [0x8081], 0x051e ; (1, 4) Loc 129=0x081; char_idx: 1=0x01
+SET [0x8002], 0x5000 ; (2, 0) Loc 2=0x002; char_idx: 0=0x00
+SET [0x8003], 0x5000 ; (3, 0) Loc 3=0x003; char_idx: 0=0x00
+SET [0x8004], 0x5000 ; (4, 0) Loc 4=0x004; char_idx: 0=0x00
+SET [0x8005], 0x5000 ; (5, 0) Loc 5=0x005; char_idx: 0=0x00
+SET [0x8006], 0x5000 ; (6, 0) Loc 6=0x006; char_idx: 0=0x00
+SET [0x8007], 0x5000 ; (7, 0) Loc 7=0x007; char_idx: 0=0x00
+SET [0x8008], 0x5000 ; (8, 0) Loc 8=0x008; char_idx: 0=0x00
+SET [0x8028], 0x0520 ; (8, 1) Loc 40=0x028; char_idx: 4=0x05
+SET [0x8048], 0x5000 ; (8, 2) Loc 72=0x058; char_idx: 0=0x00
+SET [0x8009], 0x5000 ; (9, 0) Loc 9=0x009; char_idx: 0=0x00
+SET [0x8029], 0x5000 ; (9, 1) Loc 41=0x029; char_idx: 0=0x00
+SET [0x8049], 0x5000 ; (9, 2) Loc 73=0x059; char_idx: 0=0x00
+SET [0x800a], 0x5000 ; (10, 0) Loc 10=0x00a; char_idx: 0=0x00
+SET [0x802a], 0x5000 ; (10, 1) Loc 42=0x02a; char_idx: 0=0x00
+SET [0x804a], 0x5000 ; (10, 2) Loc 74=0x05a; char_idx: 0=0x00
+SET [0x800b], 0x5000 ; (11, 0) Loc 11=0x00b; char_idx: 0=0x00
+SET [0x802b], 0x5000 ; (11, 1) Loc 43=0x02b; char_idx: 0=0x00
+SET [0x804b], 0x051c ; (11, 2) Loc 75=0x05b; char_idx: 5=0x05
+SET [0x800c], 0x5000 ; (12, 0) Loc 12=0x00c; char_idx: 0=0x00
+SET [0x802c], 0x5000 ; (12, 1) Loc 44=0x02c; char_idx: 0=0x00
+SET [0x804c], 0x5000 ; (12, 2) Loc 76=0x05c; char_idx: 0=0x00
+SET [0x806c], 0x503f ; (12, 3) Loc 108=0x06c; char_idx: 4=0x05
+SET [0x808c], 0x053d ; (12, 4) Loc 140=0x08c; char_idx: 6=0x06
+SET [0x800d], 0x5000 ; (13, 0) Loc 13=0x00d; char_idx: 0=0x00
+SET [0x802d], 0x5000 ; (13, 1) Loc 45=0x02d; char_idx: 0=0x00
+SET [0x804d], 0x5000 ; (13, 2) Loc 77=0x05d; char_idx: 0=0x00
+SET [0x806d], 0x5000 ; (13, 3) Loc 109=0x06d; char_idx: 0=0x00
+SET [0x808d], 0x053e ; (13, 4) Loc 141=0x08d; char_idx: 7=0x07
+SET [0x800e], 0x5000 ; (14, 0) Loc 14=0x00e; char_idx: 0=0x00
+SET [0x802e], 0x5000 ; (14, 1) Loc 46=0x02e; char_idx: 0=0x00
+SET [0x804e], 0x5000 ; (14, 2) Loc 78=0x05e; char_idx: 0=0x00
+SET [0x806e], 0x5000 ; (14, 3) Loc 110=0x06e; char_idx: 0=0x00
+SET [0x808e], 0x053e ; (14, 4) Loc 142=0x08e; char_idx: 7=0x07
+SET [0x800f], 0x5000 ; (15, 0) Loc 15=0x00f; char_idx: 0=0x00
+SET [0x802f], 0x5000 ; (15, 1) Loc 47=0x02f; char_idx: 0=0x00
+SET [0x804f], 0x5000 ; (15, 2) Loc 79=0x05f; char_idx: 0=0x00
+SET [0x806f], 0x5000 ; (15, 3) Loc 111=0x06f; char_idx: 0=0x00
+SET [0x808f], 0x057c ; (15, 4) Loc 143=0x08f; char_idx: 8=0x08
+SET [0x8010], 0x5000 ; (16, 0) Loc 16=0x010; char_idx: 0=0x00
+SET [0x8030], 0x5000 ; (16, 1) Loc 48=0x050; char_idx: 0=0x00
+SET [0x8050], 0x5000 ; (16, 2) Loc 80=0x050; char_idx: 0=0x00
+SET [0x8070], 0x5000 ; (16, 3) Loc 112=0x070; char_idx: 0=0x00
+SET [0x8011], 0x5000 ; (17, 0) Loc 17=0x011; char_idx: 0=0x00
+SET [0x8031], 0x5000 ; (17, 1) Loc 49=0x051; char_idx: 0=0x00
+SET [0x8051], 0x5000 ; (17, 2) Loc 81=0x051; char_idx: 0=0x00
+SET [0x8071], 0x5000 ; (17, 3) Loc 113=0x071; char_idx: 0=0x00
+SET [0x8012], 0x5000 ; (18, 0) Loc 18=0x012; char_idx: 0=0x00
+SET [0x8032], 0x5000 ; (18, 1) Loc 50=0x052; char_idx: 0=0x00
+SET [0x8052], 0x5000 ; (18, 2) Loc 82=0x052; char_idx: 0=0x00
+SET [0x8072], 0x5000 ; (18, 3) Loc 114=0x072; char_idx: 0=0x00
+SET [0x8013], 0x5000 ; (19, 0) Loc 19=0x013; char_idx: 0=0x00
+SET [0x8033], 0x5000 ; (19, 1) Loc 51=0x053; char_idx: 0=0x00
+SET [0x8053], 0x5000 ; (19, 2) Loc 83=0x053; char_idx: 0=0x00
+SET [0x8073], 0x5000 ; (19, 3) Loc 115=0x073; char_idx: 0=0x00
+SET [0x8093], 0x057d ; (19, 4) Loc 147=0x093; char_idx: 9=0x09
+SET [0x8014], 0x5000 ; (20, 0) Loc 20=0x014; char_idx: 0=0x00
+SET [0x8034], 0x5000 ; (20, 1) Loc 52=0x054; char_idx: 0=0x00
+SET [0x8054], 0x5000 ; (20, 2) Loc 84=0x054; char_idx: 0=0x00
+SET [0x8074], 0x5000 ; (20, 3) Loc 116=0x074; char_idx: 0=0x00
+SET [0x8094], 0x057e ; (20, 4) Loc 148=0x094; char_idx: 10=0x0a
+SET [0x8015], 0x5000 ; (21, 0) Loc 21=0x015; char_idx: 0=0x00
+SET [0x8035], 0x5000 ; (21, 1) Loc 53=0x055; char_idx: 0=0x00
+SET [0x8055], 0x5000 ; (21, 2) Loc 85=0x055; char_idx: 0=0x00
+SET [0x8075], 0x5000 ; (21, 3) Loc 117=0x075; char_idx: 0=0x00
+SET [0x8095], 0x057e ; (21, 4) Loc 149=0x095; char_idx: 10=0x0a
+SET [0x8016], 0x5000 ; (22, 0) Loc 22=0x016; char_idx: 0=0x00
+SET [0x8036], 0x5000 ; (22, 1) Loc 54=0x056; char_idx: 0=0x00
+SET [0x8056], 0x5000 ; (22, 2) Loc 86=0x056; char_idx: 0=0x00
+SET [0x8076], 0x5000 ; (22, 3) Loc 118=0x076; char_idx: 0=0x00
+SET [0x8096], 0x057e ; (22, 4) Loc 150=0x096; char_idx: 10=0x0a
+SET [0x8017], 0x5000 ; (23, 0) Loc 23=0x017; char_idx: 0=0x00
+SET [0x8037], 0x5000 ; (23, 1) Loc 55=0x057; char_idx: 0=0x00
+SET [0x8057], 0x5000 ; (23, 2) Loc 87=0x057; char_idx: 0=0x00
+SET [0x8077], 0x5000 ; (23, 3) Loc 119=0x077; char_idx: 0=0x00
+SET [0x8097], 0x057e ; (23, 4) Loc 151=0x097; char_idx: 10=0x0a
+SET [0x8018], 0x5000 ; (24, 0) Loc 24=0x018; char_idx: 0=0x00
+SET [0x8038], 0x5000 ; (24, 1) Loc 56=0x058; char_idx: 0=0x00
+SET [0x8058], 0x5000 ; (24, 2) Loc 88=0x058; char_idx: 0=0x00
+SET [0x8078], 0x5000 ; (24, 3) Loc 120=0x078; char_idx: 0=0x00
+SET [0x8098], 0x057f ; (24, 4) Loc 152=0x098; char_idx: 11=0x0b
+SET [0x8019], 0x5000 ; (25, 0) Loc 25=0x019; char_idx: 0=0x00
+SET [0x8039], 0x5000 ; (25, 1) Loc 57=0x059; char_idx: 0=0x00
+SET [0x8059], 0x056e ; (25, 2) Loc 89=0x059; char_idx: 12=0x0c
+SET [0x8079], 0x5000 ; (25, 3) Loc 121=0x079; char_idx: 0=0x00
+SET [0x8099], 0x057f ; (25, 4) Loc 153=0x099; char_idx: 11=0x0b
+SET [0x801a], 0x5000 ; (26, 0) Loc 26=0x01a; char_idx: 0=0x00
+SET [0x803a], 0x5000 ; (26, 1) Loc 58=0x05a; char_idx: 0=0x00
+SET [0x805a], 0x053e ; (26, 2) Loc 90=0x05a; char_idx: 7=0x07
+SET [0x801b], 0x5000 ; (27, 0) Loc 27=0x01b; char_idx: 0=0x00
+SET [0x803b], 0x5000 ; (27, 1) Loc 59=0x05b; char_idx: 0=0x00
+SET [0x805b], 0x053e ; (27, 2) Loc 91=0x05b; char_idx: 7=0x07
+SET [0x801c], 0x5000 ; (28, 0) Loc 28=0x01c; char_idx: 0=0x00
+SET [0x803c], 0x5000 ; (28, 1) Loc 60=0x05c; char_idx: 0=0x00
+SET [0x805c], 0x053e ; (28, 2) Loc 92=0x05c; char_idx: 7=0x07
+SET [0x801d], 0x5000 ; (29, 0) Loc 29=0x01d; char_idx: 0=0x00
+SET [0x803d], 0x5000 ; (29, 1) Loc 61=0x05d; char_idx: 0=0x00
+SET [0x805d], 0x053e ; (29, 2) Loc 93=0x05d; char_idx: 7=0x07
+SET [0x801e], 0x5000 ; (30, 0) Loc 30=0x01e; char_idx: 0=0x00
+SET [0x803e], 0x5000 ; (30, 1) Loc 62=0x05e; char_idx: 0=0x00
+SET [0x805e], 0x0575 ; (30, 2) Loc 94=0x05e; char_idx: 13=0x0d
+SET [0x807e], 0x5000 ; (30, 3) Loc 126=0x07e; char_idx: 0=0x00
+SET [0x809e], 0x051e ; (30, 4) Loc 158=0x09e; char_idx: 1=0x01
+SET [0x801f], 0x5000 ; (31, 0) Loc 31=0x01f; char_idx: 0=0x00
+SET [0x803f], 0x5000 ; (31, 1) Loc 63=0x05f; char_idx: 0=0x00
+SET [0x805f], 0x5000 ; (31, 2) Loc 95=0x05f; char_idx: 0=0x00
+SET [0x807f], 0x5000 ; (31, 3) Loc 127=0x07f; char_idx: 0=0x00
+SET [0x809f], 0x051e ; (31, 4) Loc 159=0x09f; char_idx: 1=0x01
+
+SET PC,POP
