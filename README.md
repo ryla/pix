@@ -2,10 +2,10 @@
 
 A game in DCPU-16 assembly inspired by Canabalt.
 
-+ Alyssa
-+ Jazmin
-+ Julian
-+ Reilly
+## Authors
+Alyssa Bawgus, Jazmin Gonzalez-Rivero, Julian Ceipek, Riley Butler
+
+----------------------
 
 ## Try It!
 http://0x10co.de/ly99i
